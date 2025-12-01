@@ -1,14 +1,13 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 import uuid
 import base64
-import __main__
 import time
 
 intake_bp = Blueprint('intake', __name__)
 
-def get_mem(): return __main__.mem
-def get_vision(): return __main__.vision
-def get_fabric(): return __main__.fabric
+def get_mem(): return current_app.mem
+def get_vision(): return current_app.vision
+def get_fabric(): return current_app.fabric
 
 @intake_bp.route('/detect', methods=['POST'])
 def detect_items():

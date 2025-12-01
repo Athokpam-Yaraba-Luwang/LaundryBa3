@@ -1,13 +1,13 @@
-from flask import Blueprint, request, jsonify
-import __main__
+from flask import Blueprint, request, jsonify, current_app
+# import __main__ <-- Removed
 
 customer_bp = Blueprint('customer', __name__)
 
 def get_mem():
-    return __main__.mem
+    return current_app.mem
 
 def get_offer():
-    return __main__.offer
+    return current_app.offer
 
 @customer_bp.route('/check_user', methods=['POST'])
 def check_user():

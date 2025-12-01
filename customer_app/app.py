@@ -30,6 +30,12 @@ a2a.register("notification_agent", notification)
 app = Flask(__name__)
 app.secret_key = "cust_key"
 
+# Attach services to app for blueprint access
+app.mem = mem
+app.a2a = a2a
+app.offer = offer
+app.secret_key = "cust_key"
+
 # Import APIs
 from api.customer_api import customer_bp
 from api.feedback_api import feedback_bp

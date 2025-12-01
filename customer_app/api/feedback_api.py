@@ -1,10 +1,10 @@
-from flask import Blueprint, request, jsonify
-import __main__
+from flask import Blueprint, request, jsonify, current_app
+# import __main__ <-- Removed
 
 feedback_bp = Blueprint('feedback', __name__)
 
 def get_mem():
-    return __main__.mem
+    return current_app.mem
 
 @feedback_bp.route('/submit', methods=['POST'])
 def submit_feedback():

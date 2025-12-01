@@ -1,10 +1,10 @@
-from flask import Blueprint, request, jsonify
-import __main__
+from flask import Blueprint, request, jsonify, current_app
+# import __main__  <-- Removed
 
 business_bp = Blueprint('business', __name__)
 
-def get_mem(): return __main__.mem
-def get_a2a(): return __main__.a2a
+def get_mem(): return current_app.mem
+def get_a2a(): return current_app.a2a
 
 @business_bp.route('/customers', methods=['GET'])
 def get_customers():

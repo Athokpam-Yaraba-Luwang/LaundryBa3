@@ -54,6 +54,11 @@ a2a.register("feedback_agent", feedback)
 app = Flask(__name__)
 app.secret_key = "dev_key"
 
+# Attach services to app for blueprint access
+app.mem = mem
+app.a2a = a2a
+app.secret_key = "dev_key"
+
 # Import APIs
 from api.intake_api import intake_bp
 from api.analytics_api import analytics_bp
