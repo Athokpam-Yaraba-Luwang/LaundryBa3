@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+{% block content %}
+<div id="offers" class="tab-content fade-in-up">
+    <div class="flex justify-between mb-8">
+        <h3 class="text-xl font-bold text-slate-800">Offers & Redeem Codes</h3>
+        <button onclick="generateCode()"
+            class="bg-blue-600 px-5 py-2.5 rounded-xl text-white font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
+            <i class="fas fa-plus mr-2"></i> Generate New Code
+        </button>
+    </div>
+
+    <div class="card">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                        <th class="p-4">Code</th>
+                        <th class="p-4">Type</th>
+                        <th class="p-4">Discount</th>
+                        <th class="p-4">Assigned To</th>
+                        <th class="p-4">Status</th>
+                        <th class="p-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="codesTable" class="text-slate-600 text-sm font-medium">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let codes = [];
+
+    async function loadCodes() {
+        const res = await fetch('/api/business/redeem_codes');
+        const data = await res.json();
+        codes = data.codes;
+        renderCodes();
+    }
+
+    function renderCodes() {
+        const tbody = document.getElementById('codesTable');
+        tbody.innerHTML = '';
+        codes.forEach((c, idx) => {
+            const statusClass = c.used ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-700';
+            const statusText = c.used ? 'Used' : 'Active';
+
+            tbody.innerHTML += `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+                <td class="p-4"><code class="bg-slate-100 px-2 py-1 rounded text-slate-800 font-mono text-xs border border-slate-200">${c.code}</code></td>
+                <td class="p-4">${c.type || 'Manual'}</td>
+                <td class="p-4 font-bold text-slate-800">${c.discount || '10%'}</td>
+                <td class="p-4 font-mono text-xs">${c.phone || '-'}</td>
+                <td class="p-4"><span class="text-[10px] px-2 py-1 rounded-full uppercase font-bold ${statusClass}">${statusText}</span></td>
+                <td class="p-4">
+                    ${!c.used ? `<button class="text-red-500 hover:text-red-700 font-bold text-xs uppercase tracking-wide transition" onclick="markUsed('${c.code}')">Mark Used</button>` : '<span class="text-slate-300 text-xs italic">No actions</span>'}
+                </td>
+            </tr>
+        `;
+        });
+    }
+
+    async function markUsed(code) {
+        if (confirm("Mark this code as used?")) {
+            // In production, call API to update code status
+            const codeObj = codes.find(c => c.code === code);
+            if (codeObj) {
+                codeObj.used = true;
+                renderCodes();
+            }
+        }
+    }
+
+    function generateCode() {
+        const code = "GEN-" + Math.random().toString(36).substring(7).toUpperCase();
+        codes.unshift({ code: code, type: "Manual", discount: "15%", phone: "-", used: false });
+        renderCodes();
+        // In production, save to database via API
+    }
+
+    loadCodes();
+</script>
+{% endblock %}

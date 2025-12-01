@@ -1,0 +1,278 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- LIGHTBOX -->
+<div id="imageLightbox" class="fixed inset-0 z-[60] bg-black/95 hidden flex items-center justify-center p-4 glass-dark"
+    onclick="closeLightbox()">
+    <img id="lightboxImg" src="" class="max-w-full max-h-[80vh] rounded-lg shadow-2xl animate-fade-in">
+</div>
+
+<!-- VIEW 3: DASHBOARD -->
+<div id="view-dashboard" class="view-section pb-20 w-full">
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 pb-16 pt-10 px-6 shadow-lg rounded-b-[2.5rem]">
+        <div class="max-w-4xl mx-auto flex justify-between items-start">
+            <div>
+                <p class="text-blue-100 font-medium mb-1">Welcome back,</p>
+                <h1 id="dashName" class="text-4xl font-bold text-white tracking-tight">User</h1>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="logout()"
+                    class="bg-white/20 p-3 rounded-full text-white hover:bg-white/30 backdrop-blur-md transition"><i
+                        class="fa-solid fa-sign-out-alt"></i></button>
+                <button onclick="openProfileModal()"
+                    class="bg-white/20 p-3 rounded-full text-white hover:bg-white/30 backdrop-blur-md transition"><i
+                        class="fa-solid fa-user-pen"></i></button>
+            </div>
+        </div>
+        <!-- Coupon -->
+        <div id="couponSection" class="max-w-4xl mx-auto mt-8 hidden animate-fade-in">
+            <div
+                class="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 rounded-2xl shadow-lg flex justify-between items-center text-blue-900 border border-yellow-300">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/30 p-2 rounded-full"><i class="fa-solid fa-gift text-xl"></i></div>
+                    <div>
+                        <p class="font-bold text-lg" id="couponDiscount">10% OFF</p>
+                        <p class="text-xs font-medium uppercase opacity-80" id="couponReason">Welcome Gift</p>
+                    </div>
+                </div>
+                <span id="couponCodeDisplay"
+                    class="font-mono bg-white text-orange-600 px-3 py-1 rounded-lg font-bold tracking-widest shadow-sm">CODE</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-6 -mt-10">
+        <div class="flex justify-between items-end mb-4 px-1">
+            <h3 class="font-bold text-gray-800 text-xl">Your Laundry</h3>
+            <span
+                class="text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded-full font-bold animate-pulse flex items-center gap-1 border border-blue-100"><span
+                    class="w-2 h-2 bg-blue-500 rounded-full"></span> Live Updates</span>
+        </div>
+
+        <div id="ordersContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+        <!-- Feedback -->
+        <div class="mt-8 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <h3 class="font-bold text-gray-800 mb-2">Rate Last Experience</h3>
+            <div class="flex gap-2 mb-4">
+                <button
+                    class="star-btn text-gray-300 hover:text-yellow-400 text-2xl transition transform hover:scale-110"
+                    data-val="1"><i class="fa-solid fa-star"></i></button>
+                <button
+                    class="star-btn text-gray-300 hover:text-yellow-400 text-2xl transition transform hover:scale-110"
+                    data-val="2"><i class="fa-solid fa-star"></i></button>
+                <button
+                    class="star-btn text-gray-300 hover:text-yellow-400 text-2xl transition transform hover:scale-110"
+                    data-val="3"><i class="fa-solid fa-star"></i></button>
+                <button
+                    class="star-btn text-gray-300 hover:text-yellow-400 text-2xl transition transform hover:scale-110"
+                    data-val="4"><i class="fa-solid fa-star"></i></button>
+                <button
+                    class="star-btn text-gray-300 hover:text-yellow-400 text-2xl transition transform hover:scale-110"
+                    data-val="5"><i class="fa-solid fa-star"></i></button>
+            </div>
+            <textarea id="feedbackText"
+                class="w-full bg-gray-50 p-4 rounded-2xl border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                rows="2" placeholder="How was the service?"></textarea>
+            <button onclick="submitFeedback()"
+                class="mt-3 w-full bg-gray-900 text-white py-3 rounded-xl font-bold text-sm hover:bg-black transition shadow-md btn-primary">Submit
+                Feedback</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: PROFILE -->
+<div id="profileModal" class="fixed inset-0 z-50 bg-black/60 hidden flex items-center justify-center p-4 glass-dark">
+    <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl animate-fade-in">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-xl">Edit Profile</h3>
+            <button onclick="closeProfileModal()"
+                class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition"><i
+                    class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div><label class="text-xs font-bold text-gray-500 uppercase ml-1">Phone</label><input id="editPhone"
+                    disabled class="w-full p-3 bg-gray-100 rounded-xl text-gray-500 font-mono mt-1"></div>
+            <div><label class="text-xs font-bold text-gray-500 uppercase ml-1">Name</label><input id="editName"
+                    class="w-full p-3 border-2 border-gray-100 rounded-xl mt-1 focus:border-blue-500 outline-none transition">
+            </div>
+            <div><label class="text-xs font-bold text-gray-500 uppercase ml-1">Address</label><textarea id="editAddress"
+                    class="w-full p-3 border-2 border-gray-100 rounded-xl mt-1 focus:border-blue-500 outline-none transition"
+                    rows="2"></textarea></div>
+            <button onclick="saveProfile()"
+                class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold mt-2 hover:bg-blue-700 shadow-lg btn-primary">Save
+                Changes</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentPhone = localStorage.getItem('user_phone');
+    let currentUser = null;
+    let pollInterval = null;
+
+    if (!currentPhone) window.location.href = '/';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Fetch user details to confirm validity and get name
+        fetch('/api/customer/check_user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: currentPhone })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.exists) {
+                    currentUser = data.profile;
+                    loadDashboard();
+                    startPolling();
+                    setupStars();
+                } else {
+                    logout();
+                }
+            });
+    });
+
+    function logout() {
+        localStorage.removeItem('user_phone');
+        window.location.href = '/';
+    }
+
+    async function loadDashboard() {
+        if (!currentPhone) return;
+
+        document.getElementById('dashName').innerText = currentUser.name.split(' ')[0];
+
+        // Load Offers
+        const resOffers = await fetch('/api/customer/offers/' + currentPhone);
+        const dataOffers = await resOffers.json();
+
+        if (dataOffers.offers && dataOffers.offers.length > 0) {
+            const offer = dataOffers.offers[0]; // Show first offer
+            document.getElementById('couponSection').classList.remove('hidden');
+            document.getElementById('couponCodeDisplay').innerText = offer.code;
+            document.getElementById('couponDiscount').innerText = offer.discount;
+            document.getElementById('couponReason').innerText = offer.reason || 'Special Offer';
+        }
+
+        // Load Orders
+        const resOrders = await fetch('/api/customer/orders/' + currentPhone);
+        const dataOrders = await resOrders.json();
+        const container = document.getElementById('ordersContainer');
+
+        let html = '';
+        if (dataOrders.orders.length === 0) {
+            html = `<div class="col-span-2 text-center py-12 text-gray-400 bg-white rounded-3xl border-2 border-dashed border-gray-200">
+                        <i class="fa-solid fa-basket-shopping text-4xl mb-3 opacity-20"></i>
+                        <p>No orders yet.</p>
+                    </div>`;
+        } else {
+            dataOrders.orders.forEach(o => {
+                let statusClass = 'bg-blue-50 text-blue-600 border-blue-100';
+                let icon = 'fa-spinner';
+
+                if (o.status === 'Pending') { statusClass = 'bg-amber-50 text-amber-600 border-amber-100'; icon = 'fa-clock'; }
+                if (o.status === 'Finished') { statusClass = 'bg-indigo-50 text-indigo-600 border-indigo-100'; icon = 'fa-shirt'; }
+                if (o.status === 'Delivered') { statusClass = 'bg-emerald-50 text-emerald-600 border-emerald-100'; icon = 'fa-check'; }
+
+                let imgUrl = o.overlay_url || 'https://via.placeholder.com/150?text=Laundry+Order';
+                if (imgUrl.startsWith('/')) {
+                    imgUrl = 'http://localhost:5000' + imgUrl;
+                }
+                const dateStr = o.timestamp ? new Date(o.timestamp * 1000).toLocaleDateString() : 'Today';
+                const itemsCount = Array.isArray(o.items) ? o.items.length : 0;
+                const total = o.total || 0;
+
+                html += `
+                    <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex gap-4 items-center transition hover:shadow-md animate-fade-in">
+                        <div onclick="openLightbox('${imgUrl}')" class="w-16 h-16 bg-gray-100 rounded-2xl overflow-hidden shrink-0 border border-gray-200 cursor-pointer hover:opacity-90 transition">
+                            <img src="${imgUrl}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start mb-1">
+                                <h4 class="font-bold text-sm text-gray-800 tracking-tight">${o.id}</h4>
+                                <span class="text-[10px] font-bold uppercase px-2 py-1 rounded-full border ${statusClass} flex items-center gap-1">
+                                    <i class="fa-solid ${icon}"></i> ${o.status}
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-500 truncate font-medium">${itemsCount} Items</p>
+                            <div class="flex justify-between items-center mt-2">
+                                <p class="text-[10px] text-gray-400 font-mono">${dateStr}</p>
+                                <span class="font-bold text-sm text-gray-900">$${total.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        if (container.innerHTML !== html) container.innerHTML = html;
+    }
+
+    function startPolling() {
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(loadDashboard, 5000);
+    }
+
+    // --- EXTRAS ---
+    let ratingVal = 0;
+    function setupStars() {
+        document.querySelectorAll('.star-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                ratingVal = parseInt(btn.dataset.val);
+                document.querySelectorAll('.star-btn').forEach(b => {
+                    b.classList.toggle('text-yellow-400', parseInt(b.dataset.val) <= ratingVal);
+                    b.classList.toggle('text-gray-300', parseInt(b.dataset.val) > ratingVal);
+                });
+            });
+        });
+    }
+    async function submitFeedback() {
+        const txt = document.getElementById('feedbackText').value;
+        if (ratingVal === 0 && !txt) return alert("Please rate or comment");
+
+        // Just pick the first order for now or generic feedback
+        await fetch('/api/feedback/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: 'GENERIC', rating: ratingVal, comment: txt })
+        });
+
+        alert("Feedback Sent! Thank you.");
+        document.getElementById('feedbackText').value = '';
+        // Reset stars
+        ratingVal = 0;
+        document.querySelectorAll('.star-btn').forEach(b => {
+            b.classList.remove('text-yellow-400');
+            b.classList.add('text-gray-300');
+        });
+    }
+    function openProfileModal() {
+        document.getElementById('editPhone').value = currentPhone;
+        document.getElementById('editName').value = currentUser.name;
+        document.getElementById('editAddress').value = currentUser.address;
+        document.getElementById('profileModal').classList.remove('hidden');
+    }
+    function closeProfileModal() { document.getElementById('profileModal').classList.add('hidden'); }
+    async function saveProfile() {
+        const name = document.getElementById('editName').value;
+        const address = document.getElementById('editAddress').value;
+
+        // Reuse register for upsert
+        await fetch('/api/customer/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: currentPhone, name, address })
+        });
+
+        currentUser.name = name;
+        currentUser.address = address;
+        closeProfileModal();
+        loadDashboard();
+    }
+    function openLightbox(src) {
+        document.getElementById('lightboxImg').src = src;
+        document.getElementById('imageLightbox').classList.remove('hidden');
+    }
+    function closeLightbox() { document.getElementById('imageLightbox').classList.add('hidden'); }
+</script>
+{% endblock %}

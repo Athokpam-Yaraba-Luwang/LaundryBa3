@@ -1,0 +1,119 @@
+{% extends "layout.html" %}
+{% block content %}
+<div id="visuals" class="tab-content fade-in-up">
+    <div class="flex justify-between mb-8">
+        <h3 class="text-xl font-bold text-slate-800">Live Graphs</h3>
+        <button onclick="loadStats()"
+            class="bg-blue-600 px-5 py-2.5 rounded-xl text-white font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
+            <i class="fas fa-sync mr-2"></i> Refresh Data
+        </button>
+    </div>
+    <div class="grid grid-cols-2 gap-8">
+        <div class="card">
+            <h3 class="text-xs font-bold text-slate-400 uppercase mb-6 tracking-wider">Revenue Trend</h3>
+            <div class="h-64"><canvas id="vizIncome"></canvas></div>
+        </div>
+        <div class="card">
+            <h3 class="text-xs font-bold text-slate-400 uppercase mb-6 tracking-wider">Order Status Distribution</h3>
+            <div class="h-64"><canvas id="vizStatus"></canvas></div>
+        </div>
+        <div class="card">
+            <h3 class="text-xs font-bold text-slate-400 uppercase mb-6 tracking-wider">Item Category Breakdown</h3>
+            <div class="h-64 flex justify-center"><canvas id="vizItems"></canvas></div>
+        </div>
+        <div class="card">
+            <h3 class="text-xs font-bold text-slate-400 uppercase mb-6 tracking-wider">Customer Satisfaction</h3>
+            <div class="h-64"><canvas id="vizFeedback"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let charts = {};
+
+    async function loadStats() {
+        const res = await fetch('/api/analytics/stats');
+        const data = await res.json();
+        const chartsData = data.chart_data;
+
+        // 1. Revenue Trend
+        if (charts['income']) charts['income'].destroy();
+        charts['income'] = new Chart(document.getElementById('vizIncome'), {
+            type: 'line',
+            data: {
+                labels: chartsData.revenue_trend.map((_, i) => i + 1),
+                datasets: [{
+                    label: 'Rev',
+                    data: chartsData.revenue_trend,
+                    borderColor: '#10b981',
+                    backgroundColor: '#10b98122',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { x: { display: false }, y: { grid: { color: '#e2e8f0' } } },
+                maintainAspectRatio: false
+            }
+        });
+
+        // 2. Status Distribution
+        const statusCounts = chartsData.status_counts;
+        if (charts['status']) charts['status'].destroy();
+        charts['status'] = new Chart(document.getElementById('vizStatus'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(statusCounts),
+                datasets: [{
+                    data: Object.values(statusCounts),
+                    backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'],
+                    borderWidth: 0
+                }]
+            },
+            options: { cutout: '70%', maintainAspectRatio: false }
+        });
+
+        // 3. Item Categories
+        const cats = chartsData.category_counts;
+        if (charts['items']) charts['items'].destroy();
+        charts['items'] = new Chart(document.getElementById('vizItems'), {
+            type: 'pie',
+            data: {
+                labels: Object.keys(cats),
+                datasets: [{
+                    data: Object.values(cats),
+                    backgroundColor: ['#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'],
+                    borderWidth: 0
+                }]
+            },
+            options: { maintainAspectRatio: false }
+        });
+
+        // 4. Satisfaction
+        const ratings = chartsData.rating_counts;
+        if (charts['feed']) charts['feed'].destroy();
+        charts['feed'] = new Chart(document.getElementById('vizFeedback'), {
+            type: 'bar',
+            data: {
+                labels: ['1', '2', '3', '4', '5'],
+                datasets: [{
+                    data: ratings,
+                    backgroundColor: '#f59e0b',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { y: { grid: { color: '#e2e8f0' } } },
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadStats();
+        setInterval(loadStats, 10000);
+    });
+</script>
+{% endblock %}

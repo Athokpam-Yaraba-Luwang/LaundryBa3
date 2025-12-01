@@ -1,0 +1,59 @@
+steps:
+  # Build Business App
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/laundryba-business', '-f', 'business_app/Dockerfile', '.']
+
+  # Build Customer App
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/laundryba-customer', '-f', 'customer_app/Dockerfile', '.']
+
+  # Push Business App
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/laundryba-business']
+
+  # Push Customer App
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/laundryba-customer']
+
+  # Deploy Business App
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'laundryba-business'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/laundryba-business'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'GOOGLE_API_KEY=${_GOOGLE_API_KEY}'
+
+  # Deploy Customer App
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'laundryba-customer'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/laundryba-customer'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'GOOGLE_API_KEY=${_GOOGLE_API_KEY}'
+      - '--set-env-vars'
+      - 'BUSINESS_APP_URL=https://laundryba-business-uc.a.run.app' # Placeholder, needs update after first deploy
+
+images:
+  - 'gcr.io/$PROJECT_ID/laundryba-business'
+  - 'gcr.io/$PROJECT_ID/laundryba-customer'
+
+substitutions:
+  _GOOGLE_API_KEY: "YOUR_API_KEY_HERE" # User should set this in Cloud Build triggers

@@ -1,0 +1,151 @@
+{% extends "layout.html" %}
+{% block content %}
+<div id="analytics" class="tab-content fade-in-up">
+    <div class="flex justify-between mb-8">
+        <h3 class="text-xl font-bold text-slate-800">Swarm Intelligence</h3>
+        <button onclick="runSwarm()"
+            class="bg-indigo-600 px-5 py-2.5 rounded-xl text-white font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-600/20">
+            <i class="fas fa-bolt mr-2"></i> Trigger 3-Agent Swarm
+        </button>
+    </div>
+
+    <div class="grid grid-cols-4 gap-6 mb-8">
+        <div class="card border-l-4 border-l-emerald-500 py-5">
+            <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Total Revenue</div>
+            <div class="text-3xl font-bold text-slate-800" id="ovrRev">--</div>
+        </div>
+        <div class="card border-l-4 border-l-amber-500 py-5">
+            <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Customer Rating</div>
+            <div class="text-3xl font-bold text-slate-800" id="ovrRating">--</div>
+        </div>
+        <div class="card border-l-4 border-l-purple-500 py-5">
+            <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Logistics Score</div>
+            <div class="text-3xl font-bold text-slate-800" id="ovrLogis">--</div>
+        </div>
+        <div class="card border-l-4 border-l-blue-500 py-5">
+            <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Active Orders</div>
+            <div class="text-3xl font-bold text-slate-800" id="ovrOrders">--</div>
+        </div>
+    </div>
+
+    <div class="grid-agents">
+        <div class="card">
+            <div class="flex justify-between mb-4">
+                <span class="text-emerald-600 font-bold uppercase text-sm tracking-wider flex items-center">
+                    <i class="fas fa-coins mr-2"></i> Revenue Agent
+                </span>
+                <span
+                    class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full uppercase font-bold">Active</span>
+            </div>
+            <div class="h-40 mb-4"><canvas id="agentIncomeChart"></canvas></div>
+            <div class="console" id="logRev">
+                <div class="text-slate-500">_idle_</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="flex justify-between mb-4">
+                <span class="text-amber-600 font-bold uppercase text-sm tracking-wider flex items-center">
+                    <i class="fas fa-comments mr-2"></i> Feedback Agent
+                </span>
+                <span
+                    class="text-[10px] bg-amber-100 text-amber-700 px-2 py-1 rounded-full uppercase font-bold">Active</span>
+            </div>
+            <div class="h-40 mb-4"><canvas id="agentFeedbackChart"></canvas></div>
+            <div class="console" id="logFeed">
+                <div class="text-slate-500">_idle_</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="flex justify-between mb-4">
+                <span class="text-purple-600 font-bold uppercase text-sm tracking-wider flex items-center">
+                    <i class="fas fa-truck mr-2"></i> Logistics Agent
+                </span>
+                <span
+                    class="text-[10px] bg-purple-100 text-purple-700 px-2 py-1 rounded-full uppercase font-bold">Active</span>
+            </div>
+            <div class="h-40 mb-4"><canvas id="agentLogisChart"></canvas></div>
+            <div class="console" id="logLogis">
+                <div class="text-slate-500">_idle_</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let charts = {};
+
+    async function runSwarm() {
+        const l1 = document.getElementById('logRev');
+        const l2 = document.getElementById('logFeed');
+        const l3 = document.getElementById('logLogis');
+
+        l1.innerHTML = '<div>> Init Revenue Module...</div>';
+        l2.innerHTML = '<div>> Init NLP Core...</div>';
+        l3.innerHTML = '<div>> Mapping routes...</div>';
+
+        // Fetch stats first for charts
+        const resStats = await fetch('/api/analytics/stats');
+        const dataStats = await resStats.json();
+        const chartsData = dataStats.chart_data;
+
+        // Update Overview
+        document.getElementById('ovrRev').innerText = '$' + dataStats.revenue.toFixed(2);
+        document.getElementById('ovrRating').innerText = dataStats.satisfaction;
+        document.getElementById('ovrOrders').innerText = dataStats.orders_pending;
+
+        // Calculate Logistics (Efficiency)
+        const delivered = dataStats.orders_finished; // Approximation
+        const total = delivered + dataStats.orders_pending;
+        const efficiency = total ? Math.round((delivered / total) * 100) : 0;
+        document.getElementById('ovrLogis').innerText = efficiency + '%';
+
+        // Render Charts
+        renderSmallChart('agentIncomeChart', 'line', chartsData.revenue_trend, '#10b981');
+        renderSmallChart('agentFeedbackChart', 'bar', chartsData.rating_counts, '#f59e0b');
+        renderSmallChart('agentLogisChart', 'doughnut', [delivered, dataStats.orders_pending], '#a855f7');
+
+        // Call Swarm Agent
+        l1.innerHTML += '<div>> Requesting analysis...</div>';
+        try {
+            const resSummary = await fetch('/api/analytics/swarm?timeframe=today');
+            const summary = await resSummary.json();
+
+            // Simulate agent logs based on summary (since summary is text)
+            // In a real streaming setup, we'd get chunks. Here we just show the result.
+            l1.innerHTML += `<div class="text-emerald-400">> Analysis Complete.</div>`;
+            l1.innerHTML += `<div class="text-slate-400 text-xs mt-2">${summary.revenue_analysis || "No revenue insights."}</div>`;
+
+            l2.innerHTML += `<div class="text-amber-400">> Sentiment Analyzed.</div>`;
+            l2.innerHTML += `<div class="text-slate-400 text-xs mt-2">${summary.feedback_analysis || "No feedback insights."}</div>`;
+
+            l3.innerHTML += `<div class="text-purple-400">> Logistics Optimized.</div>`;
+            l3.innerHTML += `<div class="text-slate-400 text-xs mt-2">${summary.logistics_analysis || "No logistics insights."}</div>`;
+
+        } catch (e) {
+            l1.innerHTML += `<div class="text-red-400">> Error: ${e.message}</div>`;
+        }
+    }
+
+    function renderSmallChart(id, type, data, color) {
+        const ctx = document.getElementById(id).getContext('2d');
+        if (charts[id]) charts[id].destroy();
+        charts[id] = new Chart(ctx, {
+            type: type,
+            data: {
+                labels: type === 'doughnut' ? ['Done', 'Pending'] : data.map((_, i) => i),
+                datasets: [{
+                    data: data,
+                    borderColor: color,
+                    backgroundColor: type === 'doughnut' ? [color, '#e2e8f0'] : color + '33',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: { plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } }, responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    // Initial load
+    runSwarm();
+</script>
+{% endblock %}

@@ -1,0 +1,19 @@
+version: '3'
+services:
+  business-app:
+    build:
+      context: .
+      dockerfile: business_app/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+
+  customer-app:
+    build:
+      context: .
+      dockerfile: customer_app/Dockerfile
+    ports:
+      - "5001:8080"
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}

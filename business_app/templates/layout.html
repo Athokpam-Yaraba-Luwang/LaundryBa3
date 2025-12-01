@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaundryBa Enterprise | Ops Center</title>
+    <!-- Added Inter Font for Professional Look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --surface: #ffffff;
+            --bg: #f1f5f9;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--surface);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            z-index: 10;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            margin-bottom: 6px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-muted);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: #f1f5f9;
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: #eff6ff;
+            /* Light blue bg */
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .main {
+            flex: 1;
+            padding: 32px 40px;
+            overflow-y: auto;
+            background: var(--bg);
+            position: relative;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            border-color: #cbd5e1;
+        }
+
+        /* Console keeps dark theme for contrast and 'tech' feel */
+        .console {
+            background: #1e293b;
+            color: #34d399;
+            font-family: 'Courier New', monospace;
+            padding: 16px;
+            border-radius: 12px;
+            height: 140px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+            border: 1px solid #334155;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            /* Darker blur */
+            z-index: 50;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--surface);
+            width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Status Buttons */
+        .status-btn {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        /* Refined Status Colors for Light Mode */
+        .bg-pending {
+            background-color: #fffbeb;
+            color: #d97706;
+            border: 1px solid #fcd34d;
+        }
+
+        .bg-pending.active {
+            background-color: #fcd34d;
+            color: #92400e;
+        }
+
+        .bg-finished {
+            background-color: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+        }
+
+        .bg-finished.active {
+            background-color: #60a5fa;
+            color: #1e3a8a;
+        }
+
+        .bg-delivered {
+            background-color: #ecfdf5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+
+        .bg-delivered.active {
+            background-color: #34d399;
+            color: #064e3b;
+        }
+
+        /* Inactive State for buttons */
+        .status-btn.inactive {
+            background: #f1f5f9;
+            color: #94a3b8;
+            border: 1px solid #e2e8f0;
+        }
+
+        .status-btn.inactive:hover {
+            background: #e2e8f0;
+        }
+
+        .grid-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .grid-agents {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <div class="text-2xl font-bold text-slate-800 mb-10 px-2 flex items-center gap-3">
+            <div
+                class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20">
+                <i class="fa-solid fa-shirt"></i>
+            </div>
+            LaundryBa
+        </div>
+        <a href="/intake" class="nav-item {% if request.path == '/intake' %}active{% endif %}">
+            <i class="fas fa-box-open w-6 text-center"></i> <span>Smart Intake</span>
+        </a>
+        <a href="/analytics" class="nav-item {% if request.path == '/analytics' %}active{% endif %}">
+            <i class="fas fa-robot w-6 text-center"></i> <span>Analytics Swarm</span>
+        </a>
+        <a href="/dashboard" class="nav-item {% if request.path == '/dashboard' %}active{% endif %}">
+            <i class="fas fa-chart-pie w-6 text-center"></i> <span>Visualizations</span>
+        </a>
+        <a href="/customers" class="nav-item {% if request.path == '/customers' %}active{% endif %}">
+            <i class="fas fa-users-viewfinder w-6 text-center"></i> <span>Customer DB</span>
+        </a>
+        <a href="/offers" class="nav-item {% if request.path == '/offers' %}active{% endif %}">
+            <i class="fas fa-tags w-6 text-center"></i> <span>Redeem/Offers</span>
+        </a>
+    </div>
+
+    <div class="main">
+        <div class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-3xl font-bold text-slate-800 tracking-tight">Autonomous Operations</h2>
+                <p class="text-slate-500 text-sm mt-1 flex items-center gap-2">
+                    <span class="relative flex h-3 w-3">
+                        <span
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </span>
+                    System Online
+                    <span class="text-slate-300">•</span>
+                    Fabric Agent Active
+                </p>
+            </div>
+            <div
+                class="bg-white px-5 py-2.5 rounded-full border border-slate-200 shadow-sm flex gap-3 items-center hover:bg-slate-50 transition cursor-pointer">
+                <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="text-sm font-bold text-slate-700">Admin Console</div>
+            </div>
+        </div>
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="{{ url_for('static', filename='js/db.js') }}"></script>
+</body>
+
+</html>

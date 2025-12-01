@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- VIEW: LOGIN -->
+<div id="view-login"
+    class="view-section active min-h-screen flex flex-col justify-center items-center px-4 bg-gradient-to-br from-blue-600 to-indigo-700">
+    <div class="w-full max-w-md bg-white/95 backdrop-blur p-8 rounded-3xl shadow-2xl animate-fade-in">
+        <div class="text-center mb-8">
+            <div
+                class="bg-blue-100 text-blue-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-sm">
+                <i class="fa-solid fa-shirt"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800">LaundryBa</h1>
+            <p class="text-gray-500 mt-2">Premium Care for Your Wear</p>
+        </div>
+        <input type="tel" id="loginPhone" placeholder="Enter phone (e.g. 555)"
+            class="w-full p-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 outline-none text-lg font-bold text-center mb-4 transition-colors" />
+        <button onclick="handleLoginStep()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition shadow-lg btn-primary">Login</button>
+    </div>
+</div>
+
+<!-- VIEW: REGISTRATION -->
+<div id="view-register"
+    class="view-section min-h-screen flex flex-col justify-center items-center px-4 bg-gray-50 hidden">
+    <div class="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl animate-fade-in">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">New Account</h2>
+        <div class="space-y-4">
+            <input type="text" id="regName"
+                class="w-full p-4 border-2 border-gray-200 rounded-2xl outline-none focus:border-blue-500 transition"
+                placeholder="Full Name">
+            <textarea id="regAddress" rows="3"
+                class="w-full p-4 border-2 border-gray-200 rounded-2xl outline-none focus:border-blue-500 transition"
+                placeholder="Address"></textarea>
+            <button onclick="handleRegistration()"
+                class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg btn-primary">Create
+                Profile</button>
+            <button onclick="location.reload()" class="w-full text-gray-400 font-bold py-2">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentPhone = null;
+
+    async function handleLoginStep() {
+        const phone = document.getElementById('loginPhone').value.trim();
+        if (phone.length < 2) return alert("Enter valid phone");
+        currentPhone = phone;
+
+        const res = await fetch('/api/customer/check_user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone })
+        });
+        const data = await res.json();
+
+        if (data.exists) {
+            localStorage.setItem('user_phone', phone);
+            window.location.href = '/my_orders';
+        } else {
+            document.getElementById('view-login').classList.add('hidden');
+            document.getElementById('view-register').classList.remove('hidden');
+        }
+    }
+
+    async function handleRegistration() {
+        const name = document.getElementById('regName').value;
+        const addr = document.getElementById('regAddress').value;
+        if (!name || !addr) return alert("Fill all fields");
+
+        const res = await fetch('/api/customer/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: currentPhone, name, address: addr })
+        });
+        const data = await res.json();
+
+        if (data.status === 'registered') {
+            localStorage.setItem('user_phone', currentPhone);
+            window.location.href = '/my_orders';
+        } else {
+            alert("Error: " + data.error);
+        }
+    }
+
+    // Auto-redirect if already logged in
+    if (localStorage.getItem('user_phone')) {
+        window.location.href = '/my_orders';
+    }
+</script>
+{% endblock %}

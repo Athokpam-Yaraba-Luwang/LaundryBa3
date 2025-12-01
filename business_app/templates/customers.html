@@ -1,0 +1,151 @@
+{% extends "layout.html" %}
+{% block content %}
+<div id="customers" class="tab-content fade-in-up">
+    <div class="card mb-8">
+        <div class="relative">
+            <i class="fas fa-search absolute left-4 top-4 text-slate-400"></i>
+            <input type="text" id="custSearch" onkeyup="renderCustomers()" placeholder="Filter by Name or Phone..."
+                class="w-full pl-10 pr-4 py-3.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition placeholder-slate-400">
+        </div>
+    </div>
+    <div id="customerGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+</div>
+
+<!-- MODAL: CUSTOMER ORDERS LAYER -->
+<div id="customerOrdersModal" class="modal-overlay" onclick="closeOrderModal(event)">
+    <div class="modal-content overflow-hidden fade-in-up" onclick="event.stopPropagation()">
+        <div class="bg-white p-6 border-b border-slate-100 flex justify-between items-center">
+            <div>
+                <h3 class="text-xl font-bold text-slate-800" id="modalCustName">Customer Name</h3>
+                <p class="text-slate-500 text-sm font-mono mt-1" id="modalCustPhone">Phone</p>
+            </div>
+            <button onclick="closeOrderModal()"
+                class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-red-500 flex items-center justify-center transition">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1 bg-slate-50" id="modalOrdersList"></div>
+    </div>
+</div>
+
+<script>
+    let allCustomers = [];
+
+    async function fetchCustomers() {
+        try {
+            const res = await fetch('/api/business/customers');
+            const data = await res.json();
+            allCustomers = data.customers;
+            renderCustomers();
+        } catch (e) {
+            console.error("Failed to fetch customers", e);
+        }
+    }
+
+    function renderCustomers() {
+        const grid = document.getElementById('customerGrid');
+        const search = document.getElementById('custSearch').value.toLowerCase();
+        grid.innerHTML = '';
+
+        if (allCustomers.length === 0) {
+            grid.innerHTML = '<div class="col-span-3 text-center text-slate-400">No customers found.</div>';
+            return;
+        }
+
+        allCustomers.forEach(u => {
+            const name = u.name || "Unknown";
+            const phone = u.phone || "";
+            const address = u.address || "No Address";
+
+            if (name.toLowerCase().includes(search) || phone.includes(search)) {
+                grid.innerHTML += `
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 hover:border-blue-300 transition cursor-pointer group shadow-sm hover:shadow-md" onclick="openCustomerOrders('${phone}', '${name}')">
+                    <div class="flex items-center gap-4 mb-3">
+                        <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg border border-blue-100">${name[0]}</div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-lg group-hover:text-blue-600 transition">${name}</h4>
+                            <p class="text-xs text-slate-500 font-mono">${phone}</p>
+                        </div>
+                    </div>
+                    <div class="text-sm text-slate-500 truncate mb-4"><i class="fas fa-map-marker-alt mr-2 opacity-50"></i> ${address}</div>
+                    <div class="text-center text-xs font-bold text-blue-600 bg-blue-50 py-2.5 rounded-lg opacity-0 group-hover:opacity-100 transition border border-blue-100">
+                        <i class="fas fa-edit mr-1"></i> Manage Orders
+                    </div>
+                </div>
+            `;
+            }
+        });
+    }
+
+    async function openCustomerOrders(phone, name) {
+        document.getElementById('modalCustName').innerText = name;
+        document.getElementById('modalCustPhone').innerText = phone;
+
+        const list = document.getElementById('modalOrdersList');
+        list.innerHTML = '<div class="text-center py-4">Loading...</div>';
+        document.getElementById('customerOrdersModal').style.display = 'flex';
+
+        try {
+            const res = await fetch(`/api/business/orders/${phone}`);
+            const data = await res.json();
+            const orders = data.orders;
+
+            list.innerHTML = '';
+
+            if (orders.length === 0) {
+                list.innerHTML = '<div class="text-center text-slate-400 py-12 flex flex-col items-center"><div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4"><i class="fas fa-box-open text-2xl opacity-50"></i></div><p>No orders found for this customer.</p></div>';
+            } else {
+                orders.forEach(order => {
+                    const pActive = order.status === 'Pending' ? 'active bg-pending' : 'inactive';
+                    const fActive = order.status === 'Finished' ? 'active bg-finished' : 'inactive';
+                    const dActive = order.status === 'Delivered' ? 'active bg-delivered' : 'inactive';
+                    const img = order.overlay_url ? order.overlay_url : (order.image ? order.image : 'https://via.placeholder.com/150');
+                    const itemsRaw = order.items ? order.items : [];
+                    const items = Array.isArray(itemsRaw) ? itemsRaw.map(i => i.label).join(', ') : itemsRaw;
+                    const ts = order.timestamp ? new Date(order.timestamp * 1000).toLocaleDateString() : 'Date';
+
+                    list.innerHTML += `
+                    <div class="bg-white p-5 rounded-xl mb-4 border border-slate-200 flex gap-5 items-start shadow-sm hover:shadow-md transition">
+                        <img src="${img}" class="w-20 h-20 rounded-lg object-cover bg-slate-100 border border-slate-200">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="font-bold text-slate-800 text-sm tracking-wide bg-slate-100 px-2 py-1 rounded font-mono border border-slate-200 text-xs">${order.id}</span>
+                                <span class="text-xs text-slate-400 font-medium">${ts}</span>
+                            </div>
+                            <p class="text-sm text-slate-600 mb-4 font-medium">${items}</p>
+                            
+                            <div class="flex gap-2">
+                                <button onclick="changeStatus('${phone}', '${order.id}', 'Pending')" class="status-btn ${pActive}">Pending</button>
+                                <button onclick="changeStatus('${phone}', '${order.id}', 'Finished')" class="status-btn ${fActive}">Finished</button>
+                                <button onclick="changeStatus('${phone}', '${order.id}', 'Delivered')" class="status-btn ${dActive}">Delivered</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                });
+            }
+        } catch (e) {
+            list.innerHTML = '<div class="text-center text-red-500">Failed to load orders.</div>';
+        }
+    }
+
+    async function changeStatus(phone, orderId, newStatus) {
+        await fetch('/api/business/order/update_status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: orderId, status: newStatus, phone: phone })
+        });
+        // Refresh modal
+        const name = document.getElementById('modalCustName').innerText;
+        openCustomerOrders(phone, name);
+    }
+
+    function closeOrderModal(e) {
+        if (!e || e.target.id === 'customerOrdersModal' || !e.target.closest('.modal-content')) {
+            document.getElementById('customerOrdersModal').style.display = 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchCustomers);
+</script>
+{% endblock %}

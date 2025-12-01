@@ -1,0 +1,463 @@
+{% extends "layout.html" %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+
+        #step5,
+        #step5 * {
+            visibility: visible;
+        }
+
+        #step5 {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+
+        /* Ensure the slip looks good */
+        #posSlip {
+            border: none !important;
+            background: white !important;
+            width: 100% !important;
+        }
+    }
+</style>
+<!-- Step 1: Customer Search -->
+<div id="step1" class="step-section">
+    <div class="card">
+        <div class="card-header bg-primary text-white">Step 1: Identify Customer</div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Customer Phone Number</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                    <input type="tel" id="customerPhone" class="form-control" placeholder="e.g. 555-0123">
+                </div>
+            </div>
+            <button class="btn btn-primary w-100" onclick="verifyCustomer()">
+                <i class="fas fa-search mr-2"></i> Find / Create Customer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Step 2: Image Capture -->
+<div id="step2" class="step-section" style="display:none;">
+    <div class="card">
+        <div class="card-header bg-primary text-white">Step 2: Capture Items</div>
+        <div class="card-body text-center">
+
+            <!-- Option Selection -->
+            <div id="captureOptions" class="mb-4">
+                <button class="btn btn-outline-primary w-100 py-3 mb-3" onclick="showCamera()">
+                    <i class="fas fa-camera mr-2"></i> Use Camera
+                </button>
+                <div class="text-muted mb-3">- OR -</div>
+                <label for="imageInput" class="btn btn-outline-secondary w-100 py-3">
+                    <i class="fas fa-upload mr-2"></i> Upload Image
+                </label>
+                <input type="file" id="imageInput" class="d-none" accept="image/*" onchange="handleFileUpload(this)">
+            </div>
+
+            <!-- Camera View -->
+            <div id="cameraView" style="display:none;">
+                <div class="position-relative mb-3"
+                    style="width: 100%; max-width: 400px; margin: 0 auto; aspect-ratio: 1/1; overflow: hidden; background: #000; border-radius: 10px;">
+                    <video id="videoFeed" autoplay playsinline
+                        style="width: 100%; height: 100%; object-fit: cover;"></video>
+                    <canvas id="captureCanvas"
+                        style="display:none; width: 100%; height: 100%; object-fit: cover;"></canvas>
+                </div>
+
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                    <button class="btn btn-secondary rounded-circle" onclick="switchCamera()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button id="captureBtn" class="btn btn-danger rounded-circle p-3" onclick="captureImage()">
+                        <i class="fas fa-circle fa-2x"></i>
+                    </button>
+                    <button id="retakeBtn" class="btn btn-warning rounded-circle" style="display:none;"
+                        onclick="retakeImage()">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+
+                <button id="confirmCaptureBtn" class="btn btn-success w-100" style="display:none;"
+                    onclick="processCapturedImage()">
+                    Confirm & Analyze <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+
+                <button class="btn btn-link text-muted mt-2" onclick="cancelCamera()">Cancel</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Step 3: Detection & Edit -->
+<div id="step3" class="step-section" style="display:none;">
+    <div class="card">
+        <div class="card-header bg-primary text-white">Step 3: Verify Detection (HITL)</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <h6 class="text-muted">Live Preview</h6>
+                    <img id="previewImage" class="img-fluid rounded border shadow-sm">
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted">AI Detected Items</h6>
+                    <div id="detectedItemsList" class="mb-3"></div>
+                    <button class="btn btn-outline-warning btn-sm" onclick="retryDetection()">
+                        <i class="fas fa-edit mr-1"></i> Adjust Boxes
+                    </button>
+                </div>
+            </div>
+            <hr>
+            <button class="btn btn-primary w-100" onclick="goToPrice()">
+                Confirm Items & Next <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Step 4: Price & Fabric -->
+<div id="step4" class="step-section" style="display:none;">
+    <div class="card">
+        <div class="card-header bg-primary text-white">Step 4: Pricing & Fabric Analysis</div>
+        <div class="card-body">
+            <h6 class="text-muted mb-3">Item Pricing</h6>
+            <div id="pricingList" class="mb-4"></div>
+
+            <div class="card bg-light mb-4 border-info">
+                <div class="card-body">
+                    <h6 class="card-title text-info"><i class="fas fa-tshirt mr-2"></i> Fabric Expert Analysis</h6>
+                    <p class="card-text" id="fabricAnalysisResult">Analyzing...</p>
+                </div>
+            </div>
+
+            <button class="btn btn-success w-100 py-3" onclick="finalizeOrder()">
+                <i class="fas fa-check-circle mr-2"></i> Finalize Order
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Step 5: POS Slip -->
+<div id="step5" class="step-section" style="display:none;">
+    <div class="card border-success">
+        <div class="card-header bg-success text-white">Order Created!</div>
+        <div class="card-body text-center">
+            <div id="posSlip" class="border p-4 mb-3"
+                style="background: #fff8e1; font-family: monospace; text-align: left; display: inline-block;">
+                <!-- POS Content -->
+            </div>
+            <br>
+            <button class="btn btn-primary no-print" onclick="printSlip()">Print Slip</button>
+            <button class="btn btn-secondary no-print" onclick="location.reload()">New Intake</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentStep = 1;
+    let customerData = null;
+    let detectionData = null;
+    let currentImageB64 = null;
+    let overlayImageB64 = ''; // Store the overlay image with bounding boxes
+
+    function showStep(step) {
+        document.querySelectorAll('.step-section').forEach(el => el.style.display = 'none');
+        document.getElementById('step' + step).style.display = 'block';
+        document.getElementById('progressBar').style.width = ((step - 1) / 4) * 100 + '%';
+        currentStep = step;
+    }
+
+    async function verifyCustomer() {
+        const phone = document.getElementById('customerPhone').value;
+        if (!phone) return alert("Enter phone");
+        // In real app, check DB. For now, mock or assume new.
+        customerData = { phone: phone, name: "Customer " + phone };
+        showStep(2);
+    }
+
+    let stream = null;
+    let facingMode = 'environment';
+    let capturedBlob = null;
+
+    function handleFileUpload(input) {
+        if (input.files && input.files[0]) {
+            uploadAndDetect(input.files[0]);
+        }
+    }
+
+    async function showCamera() {
+        document.getElementById('captureOptions').style.display = 'none';
+        document.getElementById('cameraView').style.display = 'block';
+        startCamera();
+    }
+
+    async function startCamera() {
+        if (stream) stopCamera();
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: facingMode, aspectRatio: 1 }
+            });
+            document.getElementById('videoFeed').srcObject = stream;
+        } catch (err) {
+            alert("Camera error: " + err);
+            cancelCamera();
+        }
+    }
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+    }
+
+    function cancelCamera() {
+        stopCamera();
+        document.getElementById('cameraView').style.display = 'none';
+        document.getElementById('captureOptions').style.display = 'block';
+    }
+
+    function switchCamera() {
+        facingMode = facingMode === 'user' ? 'environment' : 'user';
+        startCamera();
+    }
+
+    function captureImage() {
+        const video = document.getElementById('videoFeed');
+        const canvas = document.getElementById('captureCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas to match video dimensions (1:1 aspect ratio enforced by CSS/stream)
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Crop to square if needed (center crop)
+        const size = Math.min(video.videoWidth, video.videoHeight);
+        const sx = (video.videoWidth - size) / 2;
+        const sy = (video.videoHeight - size) / 2;
+
+        ctx.drawImage(video, sx, sy, size, size, 0, 0, canvas.width, canvas.height);
+
+        // UI Updates
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+        document.getElementById('captureBtn').style.display = 'none';
+        document.getElementById('retakeBtn').style.display = 'inline-block';
+        document.getElementById('confirmCaptureBtn').style.display = 'block';
+
+        stopCamera(); // Stop stream to save battery
+
+        canvas.toBlob(blob => {
+            capturedBlob = blob;
+        }, 'image/jpeg', 0.9);
+    }
+
+    function retakeImage() {
+        document.getElementById('captureCanvas').style.display = 'none';
+        document.getElementById('videoFeed').style.display = 'block';
+        document.getElementById('captureBtn').style.display = 'inline-block';
+        document.getElementById('retakeBtn').style.display = 'none';
+        document.getElementById('confirmCaptureBtn').style.display = 'none';
+        startCamera();
+    }
+
+    function processCapturedImage() {
+        if (capturedBlob) {
+            uploadAndDetect(capturedBlob);
+        }
+    }
+
+    async function uploadAndDetect(fileBlob) {
+        const file = fileBlob || document.getElementById('imageInput').files[0];
+        if (!file) return alert("Select file");
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        document.getElementById('step2').innerHTML += '<p>Detecting...</p>';
+
+        const res = await fetch('/api/intake/detect', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        detectionData = data;
+        currentImageB64 = data.image_b64;
+
+        // Draw on Canvas
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            // Draw boxes
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 5;
+            ctx.font = '30px Arial';
+            ctx.fillStyle = 'red';
+
+            data.items.forEach(item => {
+                const box = item.box; // [ymin, xmin, ymax, xmax] 0-1000 scale usually from Gemini
+                // If mock returns [x,y,w,h], handle that. 
+                // Let's assume Gemini [ymin, xmin, ymax, xmax] normalized 0-1000
+                let x, y, w, h;
+                if (box.length === 4) {
+                    // Check if normalized (<=1) or 1000 scale
+                    const scale = (box[0] <= 1 && box[2] <= 1) ? 1 : 1000;
+
+                    // Gemini: ymin, xmin, ymax, xmax
+                    y = (box[0] / scale) * img.height;
+                    x = (box[1] / scale) * img.width;
+                    h = ((box[2] - box[0]) / scale) * img.height;
+                    w = ((box[3] - box[1]) / scale) * img.width;
+
+                    // Mock might return [x, y, w, h] directly. 
+                    // To be safe, let's just use what we have if it looks like pixel coords
+                    if (box[2] > 100 && box[3] > 100 && scale === 1000) {
+                        // It's likely [x, y, w, h] from mock
+                        x = box[0]; y = box[1]; w = box[2]; h = box[3];
+                    }
+                }
+
+                ctx.strokeRect(x, y, w, h);
+                ctx.fillText(item.label, x, y - 10);
+            });
+
+            document.getElementById('previewImage').src = canvas.toDataURL();
+            overlayImageB64 = canvas.toDataURL(); // Store overlay image for order creation
+        };
+        img.src = URL.createObjectURL(file);
+
+        // Render items list
+        const list = document.getElementById('detectedItemsList');
+        list.innerHTML = '';
+        data.items.forEach((item, idx) => {
+            list.innerHTML += `<div class="alert alert-secondary p-2 mb-1">${item.label} (${(item.confidence * 100).toFixed(0)}%)</div>`;
+        });
+
+        showStep(3);
+    }
+
+    function retryDetection() {
+        alert("In a real app, this would open an editor to draw bounding boxes.");
+    }
+
+    async function goToPrice() {
+        const list = document.getElementById('pricingList');
+        list.innerHTML = '';
+
+        // Trigger Fabric Analysis for the first item (or all)
+        // For demo, just analyze the first one or generic
+        document.getElementById('fabricAnalysisResult').innerText = "Analyzing Fabric...";
+
+        // We use the first item's hints
+        const firstItem = detectionData.items[0] || { raw: { type: 'cloth', color: 'unknown' } };
+        const hints = { type: firstItem.raw.type, color: firstItem.raw.color };
+
+        const res = await fetch('/api/intake/analyze_fabric', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_b64: currentImageB64, hints: hints })
+        });
+        const fabricData = await res.json();
+        document.getElementById('fabricAnalysisResult').innerText = `Fabric: ${fabricData.fabric_type}. Care: ${fabricData.care_instructions}`;
+
+        detectionData.items.forEach((item, idx) => {
+            list.innerHTML += `
+            <div class="row mb-2 align-items-center">
+                <div class="col-6">${item.label}</div>
+                <div class="col-6">
+                    <input type="number" class="form-control price-input" data-idx="${idx}" placeholder="Price" value="10">
+                </div>
+            </div>
+        `;
+        });
+
+        showStep(4);
+    }
+
+    async function finalizeOrder() {
+        let total = 0;
+        const items = [];
+        document.querySelectorAll('.price-input').forEach(inp => {
+            const val = parseFloat(inp.value || 0);
+            total += val;
+            const idx = inp.dataset.idx;
+            items.push({
+                label: detectionData.items[idx].label,
+                price: val
+            });
+        });
+
+        const res = await fetch('/api/intake/create_order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone: customerData.phone,
+                items: items,
+                total: total,
+                overlay_image: overlayImageB64 // Send the overlay image with bounding boxes
+            })
+        });
+        const data = await res.json();
+
+        // Generate POS Slip
+        const slip = `
+        <div style="text-align:center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
+            <strong>LaundryBa</strong><br>
+            Premium Care
+        </div>
+        Order: <strong>${data.order_id}</strong><br>
+        Customer: ${customerData.name}<br>
+        Phone: ${customerData.phone}<br>
+        ----------------<br>
+        ${items.map(i => `${i.label} ... $${i.price.toFixed(2)}`).join('<br>')}<br>
+        ----------------<br>
+        <strong>Total: $${total.toFixed(2)}</strong><br>
+        <br>
+        Fabric Note: ${document.getElementById('fabricAnalysisResult').innerText}<br>
+        <div style="margin-top: 20px; text-align: center;">
+            <svg id="barcode"></svg>
+        </div>
+        <br>
+        ${new Date().toLocaleString()}
+    `;
+        document.getElementById('posSlip').innerHTML = slip;
+
+        // Generate Barcode
+        JsBarcode("#barcode", data.order_id, {
+            format: "CODE128",
+            lineColor: "#000",
+            width: 2,
+            height: 40,
+            displayValue: true
+        });
+
+        showStep(5);
+        document.getElementById('progressBar').style.width = '100%';
+    }
+
+    function printSlip() {
+        window.print();
+    }
+</script>
+{% endblock %}
