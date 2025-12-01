@@ -44,23 +44,29 @@
     let currentPhone = null;
 
     async function handleLoginStep() {
-        const phone = document.getElementById('loginPhone').value.trim();
-        if (phone.length < 2) return alert("Enter valid phone");
-        currentPhone = phone;
+        try {
+            const phone = document.getElementById('loginPhone').value.trim();
+            if (phone.length < 2) return alert("Enter valid phone");
+            currentPhone = phone;
 
-        const res = await fetch('/api/customer/check_user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone })
-        });
-        const data = await res.json();
+            const res = await fetch('/api/customer/check_user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone })
+            });
+            if (!res.ok) throw new Error("API Error: " + res.status);
+            const data = await res.json();
 
-        if (data.exists) {
-            localStorage.setItem('user_phone', phone);
-            window.location.href = '/my_orders';
-        } else {
-            document.getElementById('view-login').classList.add('hidden');
-            document.getElementById('view-register').classList.remove('hidden');
+            if (data.exists) {
+                localStorage.setItem('user_phone', phone);
+                window.location.href = '/my_orders';
+            } else {
+                document.getElementById('view-login').classList.add('hidden');
+                document.getElementById('view-register').classList.remove('hidden');
+            }
+        } catch (e) {
+            alert("Login failed: " + e.message);
+            console.error(e);
         }
     }
 

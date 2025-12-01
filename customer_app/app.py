@@ -43,7 +43,8 @@ def index():
 
 @app.route('/my_orders')
 def my_orders():
-    return render_template('my_orders.html')
+    business_url = os.environ.get('BUSINESS_APP_URL', 'http://localhost:5000')
+    return render_template('my_orders.html', business_url=business_url)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))

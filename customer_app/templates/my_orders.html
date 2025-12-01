@@ -177,7 +177,7 @@
 
                 let imgUrl = o.overlay_url || 'https://via.placeholder.com/150?text=Laundry+Order';
                 if (imgUrl.startsWith('/')) {
-                    imgUrl = 'http://localhost:5000' + imgUrl;
+                    imgUrl = '{{ business_url }}' + imgUrl;
                 }
                 const dateStr = o.timestamp ? new Date(o.timestamp * 1000).toLocaleDateString() : 'Today';
                 const itemsCount = Array.isArray(o.items) ? o.items.length : 0;

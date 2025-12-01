@@ -49,7 +49,7 @@ steps:
       - '--set-env-vars'
       - 'GOOGLE_API_KEY=${_GOOGLE_API_KEY}'
       - '--set-env-vars'
-      - 'BUSINESS_APP_URL=https://laundryba-business-uc.a.run.app' # Placeholder, needs update after first deploy
+      - 'BUSINESS_APP_URL=https://laundryba-business-984388967128.us-central1.run.app'
 
 images:
   - 'gcr.io/$PROJECT_ID/laundryba-business'
