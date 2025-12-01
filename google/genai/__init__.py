@@ -7,17 +7,8 @@ class Models:
         # Bridge to real Gemini API if available, or mock
         api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         
-        if not api_key:
-            print("GenAI Shim: No API Key found (GEMINI_API_KEY or GOOGLE_API_KEY). Using Mock.")
-            # Mock response object
-            class MockResponse:
-                text = '''
-                [
-                    {"type": "shirt", "color": "blue", "bbox": [0.1, 0.1, 0.5, 0.5], "confidence": 0.95},
-                    {"type": "pants", "color": "black", "bbox": [0.55, 0.1, 0.95, 0.5], "confidence": 0.90}
-                ]
-                '''
-            return MockResponse()
+        if not api_key or api_key == "YOUR_API_KEY_HERE":
+            raise ValueError("GenAI Shim: No valid API Key found. Please set GOOGLE_API_KEY or GEMINI_API_KEY.")
 
         try:
             real_genai.configure(api_key=api_key)
