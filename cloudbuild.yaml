@@ -57,3 +57,6 @@ images:
 
 substitutions:
   _GOOGLE_API_KEY: "YOUR_API_KEY_HERE" # User should set this in Cloud Build triggers
+
+options:
+  logging: CLOUD_LOGGING_ONLY
