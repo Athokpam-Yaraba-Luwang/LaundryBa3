@@ -18,10 +18,12 @@ class Config:
     BUSINESS_APP_URL = os.getenv('BUSINESS_APP_URL', f'http://localhost:{PORT_BUSINESS}')
     
     # Database
-    # On Cloud Run, use /tmp for SQLite if not using Cloud SQL
+    # On Cloud Run, use /tmp for SQLite if not using Cloud SQL/Firestore
     IS_CLOUD_RUN = os.getenv('K_SERVICE') is not None
     DB_FILE = "/tmp/agents_memory.db" if IS_CLOUD_RUN else "agents_memory.db"
     USE_CLOUD_SQL = os.getenv("USE_CLOUD_SQL", "False") == "True"
+    # Default to True on Cloud Run unless disabled
+    USE_FIRESTORE = os.getenv("USE_FIRESTORE", str(IS_CLOUD_RUN)) == "True"
 
     # AI / Google
     GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
