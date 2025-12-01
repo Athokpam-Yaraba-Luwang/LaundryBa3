@@ -8,6 +8,9 @@ from typing import Optional, Dict
 logger = logging.getLogger("memory_bank")
 
 DB_FILE = "agents_memory.db"
+if os.environ.get('K_SERVICE'):
+    DB_FILE = "/tmp/agents_memory.db"
+
 USE_CLOUD_SQL = os.getenv("USE_CLOUD_SQL", "False") == "True"
 
 class MemoryBank:
