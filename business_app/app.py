@@ -57,7 +57,14 @@ app.secret_key = "dev_key"
 # Attach services to app for blueprint access
 app.mem = mem
 app.a2a = a2a
-app.secret_key = "dev_key"
+app.vision = vision
+app.fabric = fabric
+app.hitl = hitl
+app.offer = offer
+app.analytics = analytics
+app.revenue = revenue
+app.logistics = logistics
+app.feedback = feedback
 
 # Import APIs
 from api.intake_api import intake_bp

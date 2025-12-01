@@ -292,13 +292,20 @@
 
         document.getElementById('step2').innerHTML += '<p>Detecting...</p>';
 
-        const res = await fetch('/api/intake/detect', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await res.json();
-        detectionData = data;
-        currentImageB64 = data.image_b64;
+        try {
+            const res = await fetch('/api/intake/detect', {
+                method: 'POST',
+                body: formData
+            });
+            if (!res.ok) throw new Error("API Error: " + res.status);
+            const data = await res.json();
+            detectionData = data;
+            currentImageB64 = data.image_b64;
+        } catch (e) {
+            alert("Detection failed: " + e.message);
+            document.getElementById('step2').innerHTML = document.getElementById('step2').innerHTML.replace('<p>Detecting...</p>', '');
+            return;
+        }
 
         // Draw on Canvas
         const canvas = document.createElement('canvas');
