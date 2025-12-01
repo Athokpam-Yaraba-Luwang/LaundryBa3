@@ -2,14 +2,11 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Copy agents first (shared dependency)
-COPY agents /app/agents
-
-# Copy app
-COPY customer_app /app/customer_app
+# Copy entire project to ensure shared libs (google, agents) are available
+COPY . /app
 
 # Install dependencies
-RUN pip install flask gunicorn google-generativeai
+RUN pip install --no-cache-dir -r requirements.txt
 
 WORKDIR /app/customer_app
 
