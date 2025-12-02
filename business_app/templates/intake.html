@@ -244,15 +244,17 @@
         const ctx = canvas.getContext('2d');
 
         // Set canvas to match video dimensions (1:1 aspect ratio enforced by CSS/stream)
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        // Resize to max 800px for performance
+        const MAX_SIZE = 800;
+        let size = Math.min(video.videoWidth, video.videoHeight);
 
-        // Crop to square if needed (center crop)
-        const size = Math.min(video.videoWidth, video.videoHeight);
+        canvas.width = MAX_SIZE;
+        canvas.height = MAX_SIZE;
+
         const sx = (video.videoWidth - size) / 2;
         const sy = (video.videoHeight - size) / 2;
 
-        ctx.drawImage(video, sx, sy, size, size, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, sx, sy, size, size, 0, 0, MAX_SIZE, MAX_SIZE);
 
         // UI Updates
         video.style.display = 'none';
@@ -265,7 +267,7 @@
 
         canvas.toBlob(blob => {
             capturedBlob = blob;
-        }, 'image/jpeg', 0.9);
+        }, 'image/jpeg', 0.8); // 0.8 quality
     }
 
     function retakeImage() {

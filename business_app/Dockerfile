@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 WORKDIR /app/business_app
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "wsgi:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--timeout", "120", "wsgi:app"]
