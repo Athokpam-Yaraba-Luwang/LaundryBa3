@@ -1,4 +1,4 @@
-flask
+flask[async]
 google-generativeai
 gunicorn
 python-dotenv
