@@ -293,18 +293,34 @@
         document.getElementById('step2').innerHTML += '<p>Detecting...</p>';
 
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
             const res = await fetch('/api/intake/detect', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
+
             if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.error || `API Error: ${res.status}`);
+                let errMsg = `API Error: ${res.status}`;
+                try {
+                    const errData = await res.json();
+                    errMsg = errData.error || errMsg;
+                } catch (jsonErr) {
+                    // If JSON parse fails, it's likely HTML (500/404)
+                    const text = await res.text();
+                    console.error("Non-JSON API Response:", text);
+                    errMsg += " (Invalid Response Format)";
+                }
+                throw new Error(errMsg);
             }
             const data = await res.json();
             detectionData = data;
             currentImageB64 = data.image_b64;
         } catch (e) {
+            console.error("Detection Error:", e);
             alert("Detection failed: " + e.message);
             document.getElementById('step2').innerHTML = document.getElementById('step2').innerHTML.replace('<p>Detecting...</p>', '');
             return;

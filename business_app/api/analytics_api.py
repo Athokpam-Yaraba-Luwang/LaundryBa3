@@ -8,9 +8,15 @@ def get_a2a(): return current_app.a2a
 
 @analytics_bp.route('/swarm', methods=['GET'])
 async def get_summary():
-    timeframe = request.args.get('timeframe', 'last_7_days')
-    summary = await get_a2a().call_agent("analytics_orchestrator", {"timeframe": timeframe})
-    return jsonify(summary)
+    try:
+        timeframe = request.args.get('timeframe', 'last_7_days')
+        summary = await get_a2a().call_agent("analytics_orchestrator", {"timeframe": timeframe})
+        return jsonify(summary)
+    except Exception as e:
+        import traceback
+        print(f"Analytics API Error: {e}")
+        print(traceback.format_exc())
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
 
 @analytics_bp.route('/stats', methods=['GET'])
 def get_stats():
