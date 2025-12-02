@@ -57,8 +57,17 @@ class VisionAgent(Agent):
         import io
         
         try:
+            logger.info("VisionAgent: Decoding base64...")
             img_bytes = base64.b64decode(img_b64)
+            logger.info(f"VisionAgent: Decoded {len(img_bytes)} bytes")
+            
+            logger.info("VisionAgent: Importing PIL...")
+            import PIL.Image
+            import io
+            logger.info("VisionAgent: PIL imported. Opening image...")
+            
             image = PIL.Image.open(io.BytesIO(img_bytes))
+            logger.info(f"VisionAgent: Image opened. Size: {image.size}")
             
             system_instruction = """
             You are a vision agent for a laundry business.

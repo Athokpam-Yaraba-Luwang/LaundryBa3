@@ -11,17 +11,24 @@ def get_fabric(): return current_app.fabric
 
 @intake_bp.route('/detect', methods=['POST'])
 def detect_items():
+    print("DEBUG: Entering detect_items")
     if 'image' not in request.files:
+        print("DEBUG: No image in request.files")
         return jsonify({"error": "No image uploaded"}), 400
         
-    file = request.files['image']
-    image_bytes = file.read()
-    image_b64 = base64.b64encode(image_bytes).decode('utf-8')
-    
     try:
+        file = request.files['image']
+        print(f"DEBUG: File received: {file.filename}")
+        image_bytes = file.read()
+        print(f"DEBUG: File read, bytes: {len(image_bytes)}")
+        image_b64 = base64.b64encode(image_bytes).decode('utf-8')
+        print("DEBUG: Base64 encoded")
+        
         # Call Vision Agent
+        print("DEBUG: Calling VisionAgent.analyze_image...")
         # VisionAgent.analyze_image returns a list of dicts with bbox, type, color
         items = get_vision().analyze_image(image_b64)
+        print(f"DEBUG: VisionAgent returned {len(items)} items")
         
         # Normalize output for UI
         # UI expects: items: [{label, confidence, box}]
