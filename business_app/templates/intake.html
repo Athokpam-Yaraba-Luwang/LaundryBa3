@@ -296,7 +296,7 @@
 
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
             const res = await fetch('/api/intake/detect', {
                 method: 'POST',
@@ -321,68 +321,69 @@
             const data = await res.json();
             detectionData = data;
             currentImageB64 = data.image_b64;
+
+            // Draw on Canvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+
+                // Draw boxes
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 5;
+                ctx.font = '30px Arial';
+                ctx.fillStyle = 'red';
+
+                data.items.forEach(item => {
+                    const box = item.box; // [ymin, xmin, ymax, xmax] 0-1000 scale usually from Gemini
+                    // If mock returns [x,y,w,h], handle that. 
+                    // Let's assume Gemini [ymin, xmin, ymax, xmax] normalized 0-1000
+                    let x, y, w, h;
+                    if (box.length === 4) {
+                        // Check if normalized (<=1) or 1000 scale
+                        const scale = (box[0] <= 1 && box[2] <= 1) ? 1 : 1000;
+
+                        // Gemini: ymin, xmin, ymax, xmax
+                        y = (box[0] / scale) * img.height;
+                        x = (box[1] / scale) * img.width;
+                        h = ((box[2] - box[0]) / scale) * img.height;
+                        w = ((box[3] - box[1]) / scale) * img.width;
+
+                        // Mock might return [x, y, w, h] directly. 
+                        // To be safe, let's just use what we have if it looks like pixel coords
+                        if (box[2] > 100 && box[3] > 100 && scale === 1000) {
+                            // It's likely [x, y, w, h] from mock
+                            x = box[0]; y = box[1]; w = box[2]; h = box[3];
+                        }
+                    }
+
+                    ctx.strokeRect(x, y, w, h);
+                    ctx.fillText(item.label, x, y - 10);
+                });
+
+                document.getElementById('previewImage').src = canvas.toDataURL();
+                overlayImageB64 = canvas.toDataURL(); // Store overlay image for order creation
+            };
+            img.src = URL.createObjectURL(file);
+
+            // Render items list
+            const list = document.getElementById('detectedItemsList');
+            list.innerHTML = '';
+            data.items.forEach((item, idx) => {
+                list.innerHTML += `<div class="alert alert-secondary p-2 mb-1">${item.label} (${(item.confidence * 100).toFixed(0)}%)</div>`;
+            });
+
+            showStep(3);
+
         } catch (e) {
             console.error("Detection Error:", e);
             alert("Detection failed: " + e.message);
             document.getElementById('step2').innerHTML = document.getElementById('step2').innerHTML.replace('<p>Detecting...</p>', '');
             return;
         }
-
-        // Draw on Canvas
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-
-            // Draw boxes
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 5;
-            ctx.font = '30px Arial';
-            ctx.fillStyle = 'red';
-
-            data.items.forEach(item => {
-                const box = item.box; // [ymin, xmin, ymax, xmax] 0-1000 scale usually from Gemini
-                // If mock returns [x,y,w,h], handle that. 
-                // Let's assume Gemini [ymin, xmin, ymax, xmax] normalized 0-1000
-                let x, y, w, h;
-                if (box.length === 4) {
-                    // Check if normalized (<=1) or 1000 scale
-                    const scale = (box[0] <= 1 && box[2] <= 1) ? 1 : 1000;
-
-                    // Gemini: ymin, xmin, ymax, xmax
-                    y = (box[0] / scale) * img.height;
-                    x = (box[1] / scale) * img.width;
-                    h = ((box[2] - box[0]) / scale) * img.height;
-                    w = ((box[3] - box[1]) / scale) * img.width;
-
-                    // Mock might return [x, y, w, h] directly. 
-                    // To be safe, let's just use what we have if it looks like pixel coords
-                    if (box[2] > 100 && box[3] > 100 && scale === 1000) {
-                        // It's likely [x, y, w, h] from mock
-                        x = box[0]; y = box[1]; w = box[2]; h = box[3];
-                    }
-                }
-
-                ctx.strokeRect(x, y, w, h);
-                ctx.fillText(item.label, x, y - 10);
-            });
-
-            document.getElementById('previewImage').src = canvas.toDataURL();
-            overlayImageB64 = canvas.toDataURL(); // Store overlay image for order creation
-        };
-        img.src = URL.createObjectURL(file);
-
-        // Render items list
-        const list = document.getElementById('detectedItemsList');
-        list.innerHTML = '';
-        data.items.forEach((item, idx) => {
-            list.innerHTML += `<div class="alert alert-secondary p-2 mb-1">${item.label} (${(item.confidence * 100).toFixed(0)}%)</div>`;
-        });
-
-        showStep(3);
     }
 
     function retryDetection() {
