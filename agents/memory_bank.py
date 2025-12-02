@@ -163,7 +163,8 @@ class MemoryBank:
     def get_orders_by_phone(self, phone: str) -> list:
         if self.use_cloud:
             from google.cloud import firestore
-            docs = self.db.collection('orders').where('phone', '==', phone).order_by('timestamp', direction=firestore.Query.DESCENDING).stream()
+            # Remove order_by to avoid needing a composite index immediately
+            docs = self.db.collection('orders').where('phone', '==', phone).stream()
             results = []
             for d in docs:
                 dd = d.to_dict()
@@ -173,6 +174,8 @@ class MemoryBank:
                 order_data['status'] = dd.get('status')
                 order_data['timestamp'] = dd.get('timestamp')
                 results.append(order_data)
+            # Sort in Python
+            results.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
             return results
         cur = self.conn.cursor()
         cur.execute("SELECT id, status, data, timestamp FROM orders WHERE phone = ? ORDER BY timestamp DESC", (phone,))
