@@ -18,23 +18,29 @@ def detect_items():
     image_bytes = file.read()
     image_b64 = base64.b64encode(image_bytes).decode('utf-8')
     
-    # Call Vision Agent
-    # VisionAgent.analyze_image returns a list of dicts with bbox, type, color
-    items = get_vision().analyze_image(image_b64)
-    
-    # Normalize output for UI
-    # UI expects: items: [{label, confidence, box}]
-    # VisionAgent returns: [{type, confidence, bbox, color}]
-    ui_items = []
-    for item in items:
-        ui_items.append({
-            "label": f"{item.get('color', '')} {item.get('type', 'item')}".strip(),
-            "confidence": item.get('confidence', 0.9),
-            "box": item.get('bbox', [0,0,0,0]), # [ymin, xmin, ymax, xmax] or similar
-            "raw": item
-        })
+    try:
+        # Call Vision Agent
+        # VisionAgent.analyze_image returns a list of dicts with bbox, type, color
+        items = get_vision().analyze_image(image_b64)
         
-    return jsonify({"items": ui_items, "image_b64": image_b64})
+        # Normalize output for UI
+        # UI expects: items: [{label, confidence, box}]
+        # VisionAgent returns: [{type, confidence, bbox, color}]
+        ui_items = []
+        for item in items:
+            ui_items.append({
+                "label": f"{item.get('color', '')} {item.get('type', 'item')}".strip(),
+                "confidence": item.get('confidence', 0.9),
+                "box": item.get('bbox', [0,0,0,0]), # [ymin, xmin, ymax, xmax] or similar
+                "raw": item
+            })
+            
+        return jsonify({"items": ui_items, "image_b64": image_b64})
+    except Exception as e:
+        import traceback
+        print(f"Intake API Error: {e}")
+        print(traceback.format_exc())
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
 
 @intake_bp.route('/analyze_fabric', methods=['POST'])
 def analyze_fabric():
