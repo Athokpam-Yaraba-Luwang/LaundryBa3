@@ -107,7 +107,15 @@ class VisionAgent(Agent):
             return items
             
         except Exception as e:
-            print(f"Vision Agent Error: {e}")
+            import traceback
+            logger.error(f"Vision Agent Error: {e}")
+            logger.error(traceback.format_exc())
+            # Check if API key is set
+            key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+            if not key:
+                logger.error("CRITICAL: GOOGLE_API_KEY is missing!")
+            else:
+                logger.info(f"API Key present (starts with {key[:4]}...)")
             raise e
 
     # Legacy method for backward compatibility during migration

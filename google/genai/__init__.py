@@ -32,7 +32,9 @@ class Models:
             
             return m.generate_content(real_contents)
         except Exception as e:
-            print(f"GenAI Shim Error: {e}")
+            import logging, traceback
+            logging.error(f"GenAI Shim Error: {e}")
+            logging.error(traceback.format_exc())
             raise e
 
 class Client:
