@@ -33,6 +33,11 @@
         }
     }
 </style>
+<!-- Progress Bar -->
+<div class="progress mb-4" style="height: 5px;">
+    <div id="progressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+</div>
+
 <!-- Step 1: Customer Search -->
 <div id="step1" class="step-section">
     <div class="card">
@@ -292,7 +297,12 @@
         const formData = new FormData();
         formData.append('image', file);
 
-        document.getElementById('step2').innerHTML += '<p>Detecting...</p>';
+        const statusDiv = document.getElementById('detectionStatus') || document.createElement('div');
+        statusDiv.id = 'detectionStatus';
+        if (!document.getElementById('detectionStatus')) {
+            document.getElementById('step2').querySelector('.card-body').appendChild(statusDiv);
+        }
+        statusDiv.innerHTML = '<p class="text-info"><i class="fas fa-spinner fa-spin mr-2"></i>Detecting items... Please wait.</p>';
 
         try {
             const controller = new AbortController();
@@ -381,7 +391,8 @@
         } catch (e) {
             console.error("Detection Error:", e);
             alert("Detection failed: " + e.message);
-            document.getElementById('step2').innerHTML = document.getElementById('step2').innerHTML.replace('<p>Detecting...</p>', '');
+            const statusDiv = document.getElementById('detectionStatus');
+            if (statusDiv) statusDiv.innerHTML = '';
             return;
         }
     }
