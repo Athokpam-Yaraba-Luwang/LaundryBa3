@@ -55,25 +55,45 @@
         </div>
     </div>
 
-    <!-- Debug/User Control -->
-    <div class="fixed bottom-4 left-4 z-40 bg-white p-2 rounded shadow text-xs opacity-50 hover:opacity-100 transition">
-        <label class="block font-bold mb-1">Current User Phone:</label>
-        <input type="text" id="debugPhone" class="border rounded px-2 py-1 w-32" onchange="updatePhone(this.value)">
+    <!-- User Profile / Debug -->
+    <div class="fixed bottom-4 left-4 z-40">
+        <div class="bg-white/90 backdrop-blur shadow-lg rounded-full px-4 py-2 flex items-center gap-2 border border-gray-200 text-sm hover:scale-105 transition cursor-pointer"
+            onclick="document.getElementById('phoneInput').classList.toggle('hidden')">
+            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span class="font-medium text-gray-600">User: <span id="displayPhone">...</span></span>
+            <i class="fas fa-cog text-gray-400"></i>
+        </div>
+        <input type="text" id="phoneInput"
+            class="hidden mt-2 border rounded-lg px-3 py-2 w-40 shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter Phone..." onchange="updatePhone(this.value)">
     </div>
 
     <script>
         // Notification Logic
         let PHONE = localStorage.getItem('customer_phone') || '123';
-        document.getElementById('debugPhone').value = PHONE;
 
-        let lastKnownId = null; // Track by ID, not count
+        // Update UI
+        document.getElementById('displayPhone').textContent = PHONE;
+        document.getElementById('phoneInput').value = PHONE;
 
         function updatePhone(val) {
+            if (!val) return;
             PHONE = val;
             localStorage.setItem('customer_phone', val);
-            lastKnownId = null; // Reset tracking
+            document.getElementById('displayPhone').textContent = val;
+            document.getElementById('phoneInput').classList.add('hidden');
+
+            // Reset seen status to show notifications for this new user
+            localStorage.removeItem('last_seen_notif_id');
+
             checkNotifications(); // Check immediately
-            alert("Switched user to: " + val);
+
+            // Show toast confirmation
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-20 left-4 bg-gray-800 text-white px-4 py-2 rounded-lg text-xs shadow-lg z-50";
+            toast.textContent = `Switched to user: ${val}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
         }
 
         async function checkNotifications() {
@@ -86,19 +106,13 @@
 
                 if (notifs.length > 0) {
                     const latest = notifs[0]; // Assumes sorted desc by timestamp
+                    const lastSeenId = localStorage.getItem('last_seen_notif_id');
 
-                    // If we haven't seen this ID before
-                    if (lastKnownId && latest.id !== lastKnownId) {
-                        // It's a new notification!
+                    // Show if we haven't seen this specific notification ID yet
+                    if (!lastSeenId || latest.id != lastSeenId) {
                         showPopup(latest.message);
-                    } else if (!lastKnownId) {
-                        // First load. 
-                        // Optional: Show latest if it's very recent (e.g. < 1 min ago)?
-                        // For demo purposes, let's NOT show on first load to avoid spam, 
-                        // OR show if it's unread (if we tracked read status properly).
-                        // Let's just track it for now.
+                        localStorage.setItem('last_seen_notif_id', latest.id);
                     }
-                    lastKnownId = latest.id;
                 }
             } catch (e) {
                 console.error("Polling error:", e);
@@ -110,6 +124,8 @@
             const msgEl = document.getElementById('popup-message');
             msgEl.textContent = msg;
             popup.classList.remove('hidden');
+
+            // Play a subtle sound? (Optional, browser might block)
         }
 
         function closePopup() {
