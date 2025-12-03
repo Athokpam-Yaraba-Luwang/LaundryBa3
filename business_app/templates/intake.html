@@ -333,11 +333,14 @@
             currentImageB64 = data.image_b64;
 
             // Draw on Canvas
+            console.log("DEBUG: Creating image for canvas...");
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const img = new Image();
+
             img.onload = () => {
-                const MAX_SIZE = 800;
+                console.log("DEBUG: Image loaded. Original size:", img.width, img.height);
+                const MAX_SIZE = 600; // Reduced for Firestore limit
                 let w = img.width;
                 let h = img.height;
                 if (w > h) {
@@ -347,6 +350,7 @@
                 }
                 canvas.width = w;
                 canvas.height = h;
+                console.log("DEBUG: Resized to:", w, h);
                 ctx.drawImage(img, 0, 0, w, h);
 
                 // Draw boxes
@@ -355,27 +359,15 @@
                 ctx.font = '30px Arial';
                 ctx.fillStyle = 'red';
 
-                data.items.forEach(item => {
-                    const box = item.box; // [ymin, xmin, ymax, xmax] 0-1000 scale usually from Gemini
-                    // If mock returns [x,y,w,h], handle that. 
-                    // Let's assume Gemini [ymin, xmin, ymax, xmax] normalized 0-1000
+                data.items.forEach((item, idx) => {
+                    const box = item.box;
                     let x, y, w, h;
                     if (box.length === 4) {
-                        // Check if normalized (<=1) or 1000 scale
                         const scale = (box[0] <= 1 && box[2] <= 1) ? 1 : 1000;
-
-                        // Gemini: ymin, xmin, ymax, xmax
-                        y = (box[0] / scale) * img.height;
-                        x = (box[1] / scale) * img.width;
-                        h = ((box[2] - box[0]) / scale) * img.height;
-                        w = ((box[3] - box[1]) / scale) * img.width;
-
-                        // Mock might return [x, y, w, h] directly. 
-                        // To be safe, let's just use what we have if it looks like pixel coords
-                        if (box[2] > 100 && box[3] > 100 && scale === 1000) {
-                            // It's likely [x, y, w, h] from mock
-                            x = box[0]; y = box[1]; w = box[2]; h = box[3];
-                        }
+                        y = (box[0] / scale) * img.height * (canvas.height / img.height);
+                        x = (box[1] / scale) * img.width * (canvas.width / img.width);
+                        h = ((box[2] - box[0]) / scale) * img.height * (canvas.height / img.height);
+                        w = ((box[3] - box[1]) / scale) * img.width * (canvas.width / img.width);
                     }
 
                     // Use detected color for box if valid, else cycle colors
@@ -391,21 +383,29 @@
                     ctx.textBaseline = 'middle';
                     ctx.fillStyle = 'white';
                     ctx.strokeStyle = 'black';
-                    ctx.lineWidth = 3; // Thicker outline for text
+                    ctx.lineWidth = 3;
                     ctx.font = 'bold 24px Arial';
 
                     const centerX = x + (w / 2);
                     const centerY = y + (h / 2);
 
-                    // Draw text with outline
                     ctx.strokeText(item.label, centerX, centerY);
                     ctx.fillText(item.label, centerX, centerY);
                 });
 
-                document.getElementById('previewImage').src = canvas.toDataURL();
-                overlayImageB64 = canvas.toDataURL(); // Store overlay image for order creation
+                const dataURL = canvas.toDataURL('image/jpeg', 0.6);
+                console.log("DEBUG: Generated Data URL length:", dataURL.length);
+                document.getElementById('previewImage').src = dataURL;
+                overlayImageB64 = dataURL;
             };
+
+            img.onerror = (err) => {
+                console.error("DEBUG: Image load failed", err);
+                alert("Failed to load image for preview");
+            };
+
             img.src = URL.createObjectURL(file);
+            console.log("DEBUG: Image src set to blob URL");
 
             // Render items list
             const list = document.getElementById('detectedItemsList');

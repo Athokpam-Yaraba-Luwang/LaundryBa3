@@ -73,25 +73,10 @@ def create_order():
     
     order_id = f"ORD-{uuid.uuid4().hex[:6].upper()}"
     
-    # Save overlay image as file if provided
-    overlay_url = f'/static/overlays/{order_id}.png'
+    # Store overlay image directly in Firestore (as base64) to avoid ephemeral storage issues on Cloud Run
+    # The frontend is now resizing to max 600px/JPEG 0.6, so it should be < 100KB, well within Firestore 1MB limit.
     if overlay_base64 and overlay_base64.startswith('data:image'):
-        try:
-            # Remove data:image/png;base64, prefix
-            image_data = overlay_base64.split(',')[1]
-            image_bytes = base64.b64decode(image_data)
-            
-            # Save to file
-            import os
-            static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'overlays')
-            os.makedirs(static_dir, exist_ok=True)
-            
-            file_path = os.path.join(static_dir, f'{order_id}.png')
-            with open(file_path, 'wb') as f:
-                f.write(image_bytes)
-        except Exception as e:
-            print(f"Error saving overlay image: {e}")
-            overlay_url = 'https://via.placeholder.com/150?text=No+Image'
+        overlay_url = overlay_base64 # Store the data URL directly
     else:
         overlay_url = 'https://via.placeholder.com/150?text=No+Image'
     
