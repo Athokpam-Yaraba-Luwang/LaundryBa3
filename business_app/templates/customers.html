@@ -114,10 +114,21 @@
                             </div>
                             <p class="text-sm text-slate-600 mb-4 font-medium">${items}</p>
                             
-                            <div class="flex gap-2">
-                                <button onclick="changeStatus('${phone}', '${order.id}', 'Pending')" class="status-btn ${pActive}">Pending</button>
-                                <button onclick="changeStatus('${phone}', '${order.id}', 'Finished')" class="status-btn ${fActive}">Finished</button>
-                                <button onclick="changeStatus('${phone}', '${order.id}', 'Delivered')" class="status-btn ${dActive}">Delivered</button>
+                            <div class="flex gap-2 flex-wrap">
+                                ${order.status === 'Needs Approval' ? `
+                                    <div class="w-full mb-2 bg-red-50 border border-red-100 p-3 rounded-lg flex items-center justify-between">
+                                        <div class="flex items-center gap-2 text-red-600 font-bold text-xs">
+                                            <i class="fas fa-exclamation-triangle"></i> Review Needed
+                                        </div>
+                                        <button onclick="changeStatus('${phone}', '${order.id}', 'Pending')" class="bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-700 transition shadow-sm">
+                                            <i class="fas fa-check mr-1"></i> Approve
+                                        </button>
+                                    </div>
+                                ` : ''}
+                                
+                                <button onclick="changeStatus('${phone}', '${order.id}', 'Pending')" class="status-btn ${pActive}" ${order.status === 'Needs Approval' ? 'disabled style="opacity:0.5"' : ''}>Pending</button>
+                                <button onclick="changeStatus('${phone}', '${order.id}', 'Finished')" class="status-btn ${fActive}" ${order.status === 'Needs Approval' ? 'disabled style="opacity:0.5"' : ''}>Finished</button>
+                                <button onclick="changeStatus('${phone}', '${order.id}', 'Delivered')" class="status-btn ${dActive}" ${order.status === 'Needs Approval' ? 'disabled style="opacity:0.5"' : ''}>Delivered</button>
                             </div>
                         </div>
                     </div>

@@ -87,7 +87,19 @@ def create_order():
         "overlay_url": overlay_url
     }
     
+    # Determine initial status based on items (HITL Safety Check)
+    status = "Pending"
+    delicate_keywords = ["silk", "wool", "leather", "cashmere", "delicate"]
+    
+    # Check if any item label contains a delicate keyword (case-insensitive)
+    if items and isinstance(items, list):
+        for item in items:
+            label = item.get('label', '').lower()
+            if any(k in label for k in delicate_keywords):
+                status = "Needs Approval"
+                break
+    
     # Save to MemoryBank
-    get_mem().save_order(order_id, phone, "Pending", order_data)
+    get_mem().save_order(order_id, phone, status, order_data)
     
     return jsonify({"status": "success", "order_id": order_id})
