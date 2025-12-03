@@ -123,6 +123,9 @@
                 <div class="col-md-6">
                     <h6 class="text-muted">AI Detected Items</h6>
                     <div id="detectedItemsList" class="mb-3"></div>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="reDetect()">
+                        <i class="fas fa-redo mr-1"></i> Re-Detect
+                    </button>
                     <button class="btn btn-outline-warning btn-sm" onclick="retryDetection()">
                         <i class="fas fa-edit mr-1"></i> Adjust Boxes
                     </button>
@@ -444,6 +447,25 @@
 
     function retryDetection() {
         alert("In a real app, this would open an editor to draw bounding boxes.");
+    }
+
+    function reDetect() {
+        // Clear current data
+        detectionData = null;
+        currentImageB64 = null;
+        overlayImageB64 = '';
+        document.getElementById('previewImage').src = '';
+        document.getElementById('detectedItemsList').innerHTML = '';
+
+        // Go back to step 2
+        showStep(2);
+
+        // Reset camera view if needed
+        document.getElementById('captureOptions').style.display = 'block';
+        document.getElementById('cameraView').style.display = 'none';
+
+        // Reset file input
+        document.getElementById('imageInput').value = '';
     }
 
     async function goToPrice() {
