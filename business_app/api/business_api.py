@@ -31,15 +31,20 @@ def update_status():
     get_mem().update_order_status(order_id, status)
     
     # Trigger Notification Agent
-    # Trigger Notification Agent
     if status in ['Finished', 'Delivered', 'Ready']:
         # Pass context to agent so it can generate a personalized message
-        get_a2a().call_agent("notification_agent", {
-            "phone": phone, 
-            "status": status, 
-            "order_id": order_id,
-            "type": "order_update"
-        })
+        import asyncio
+        try:
+            # Create a new loop for this thread if needed, or run in existing
+            # Since Flask is threaded, we can usually just run:
+            asyncio.run(get_a2a().call_agent("notification_agent", {
+                "phone": phone, 
+                "status": status, 
+                "order_id": order_id,
+                "type": "order_update"
+            }))
+        except Exception as e:
+            print(f"Failed to trigger notification: {e}")
         
     return jsonify({"status": "updated"})
 
