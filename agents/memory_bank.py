@@ -289,8 +289,12 @@ class MemoryBank:
     def get_notifications_by_phone(self, phone: str) -> list:
         if self.use_cloud:
             from google.cloud import firestore
-            docs = self.db.collection('notifications').where('phone', '==', phone).order_by('timestamp', direction=firestore.Query.DESCENDING).limit(20).stream()
-            return [{"id": d.id, **d.to_dict()} for d in docs]
+            # Remove order_by to avoid needing a composite index immediately
+            docs = self.db.collection('notifications').where('phone', '==', phone).stream()
+            results = [{"id": d.id, **d.to_dict()} for d in docs]
+            # Sort in Python
+            results.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
+            return results[:20]
         
         cur = self.conn.cursor()
         cur.execute("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, phone TEXT, message TEXT, timestamp REAL, read INTEGER)")
