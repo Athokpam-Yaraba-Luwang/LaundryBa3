@@ -55,6 +55,23 @@ class NotificationAgent(Agent):
         # In real ADK: return await ctx.call_tool("push_notify_tool", {"phone":phone, "msg":msg})
         # For our shim/demo:
         print(f"[NotificationAgent] Sending to {phone}: {msg}")
+        
+        # Save to memory bank so it can be fetched by UI
+        # We need access to memory bank. In this shim, we can import the global one or pass it in.
+        # Ideally passed in init, but for quick fix we can import from app context or similar.
+        # But since this is an Agent class, let's try to get it from the tool context or import.
+        # Actually, let's just import the MemoryBank class and instantiate it (it handles singleton/connection logic)
+        # OR better, pass it in constructor if possible.
+        # Given the constraints, let's import the global 'mem' from business_app.app if running there, 
+        # but this agent might run in isolation.
+        # SAFEST: Re-instantiate MemoryBank (it connects to same DB/Firestore)
+        try:
+            from agents.memory_bank import MemoryBank
+            mem = MemoryBank()
+            mem.save_notification(phone, msg)
+        except Exception as e:
+            print(f"[NotificationAgent] Failed to save notification: {e}")
+
         return {"status": "sent", "recipient": phone, "message": msg}
 
 # Legacy wrapper

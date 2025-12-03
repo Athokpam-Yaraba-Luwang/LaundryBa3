@@ -267,3 +267,38 @@ class MemoryBank:
                 "id": r[0], "order_id": r[1], "rating": r[2], "comment": r[3], "timestamp": r[4]
             })
         return results
+
+    def save_notification(self, phone: str, message: str):
+        import time
+        ts = time.time()
+        if self.use_cloud:
+            self.db.collection('notifications').add({
+                "phone": phone,
+                "message": message,
+                "timestamp": ts,
+                "read": False
+            })
+            return
+        
+        # Ensure table exists (lazy init for SQLite)
+        cur = self.conn.cursor()
+        cur.execute("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, phone TEXT, message TEXT, timestamp REAL, read INTEGER)")
+        cur.execute("INSERT INTO notifications (phone, message, timestamp, read) VALUES (?, ?, ?, ?)", (phone, message, ts, 0))
+        self.conn.commit()
+
+    def get_notifications_by_phone(self, phone: str) -> list:
+        if self.use_cloud:
+            from google.cloud import firestore
+            docs = self.db.collection('notifications').where('phone', '==', phone).order_by('timestamp', direction=firestore.Query.DESCENDING).limit(20).stream()
+            return [{"id": d.id, **d.to_dict()} for d in docs]
+        
+        cur = self.conn.cursor()
+        cur.execute("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, phone TEXT, message TEXT, timestamp REAL, read INTEGER)")
+        cur.execute("SELECT id, message, timestamp, read FROM notifications WHERE phone = ? ORDER BY timestamp DESC LIMIT 20", (phone,))
+        rows = cur.fetchall()
+        results = []
+        for r in rows:
+            results.append({
+                "id": r[0], "message": r[1], "timestamp": r[2], "read": bool(r[3])
+            })
+        return results

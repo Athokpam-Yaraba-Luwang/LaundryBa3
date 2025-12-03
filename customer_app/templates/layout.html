@@ -32,6 +32,54 @@
 
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
     {% block content %}{% endblock %}
+    <!-- Notification Toast Container -->
+    <div id="notification-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <script>
+        // Simple polling for notifications
+        const PHONE = localStorage.getItem('customer_phone') || '123'; // Default for demo
+        let lastNotifCount = 0;
+
+        async function checkNotifications() {
+            try {
+                const res = await fetch(`/api/customer/notifications?phone=${PHONE}`);
+                const data = await res.json();
+                const notifs = data.notifications || [];
+
+                // If we have new notifications (more than before), show the latest one
+                if (notifs.length > lastNotifCount && lastNotifCount > 0) {
+                    const latest = notifs[0]; // Assumes sorted desc
+                    showToast(latest.message);
+                }
+                lastNotifCount = notifs.length;
+            } catch (e) {
+                console.error("Polling error:", e);
+            }
+        }
+
+        function showToast(msg) {
+            const container = document.getElementById('notification-container');
+            const toast = document.createElement('div');
+            toast.className = "bg-white border-l-4 border-blue-500 shadow-lg rounded-r px-4 py-3 flex items-center animate-bounce";
+            toast.innerHTML = `
+                <div class="text-blue-500 text-2xl mr-3"><i class="fas fa-bell"></i></div>
+                <div>
+                    <p class="font-bold text-gray-700">New Update!</p>
+                    <p class="text-sm text-gray-600">${msg}</p>
+                </div>
+            `;
+            container.appendChild(toast);
+
+            // Remove after 5 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        // Poll every 5 seconds
+        setInterval(checkNotifications, 5000);
+        checkNotifications(); // Initial check
+    </script>
 </body>
 
 </html>
