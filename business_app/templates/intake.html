@@ -367,22 +367,19 @@
                         const scale = (box[0] <= 1 && box[2] <= 1) ? 1 : 1000;
                         // console.log(`DEBUG: Item ${idx} scale: ${scale}, box:`, box);
 
-                        // Gemini 2.0 Flash Exp seems to return [ymin, xmin, width, height] 
-                        // based on empirical evidence (logs showing ymax < ymin if interpreted as such).
+                        // Gemini 2.0 Flash Exp seems to return [ymin, xmin, height, width] 
+                        // based on empirical evidence (box[2] is height, box[3] is width).
+                        // Previous attempt with w=box[2] caused tall items to be drawn wide ("extends far right").
 
                         y = (box[0] / scale) * img.height * (canvas.height / img.height);
                         x = (box[1] / scale) * img.width * (canvas.width / img.width);
 
-                        // box[2] is width, box[3] is height
-                        let rawW = box[2];
-                        let rawH = box[3];
+                        // box[2] is HEIGHT, box[3] is WIDTH
+                        let rawH = box[2];
+                        let rawW = box[3];
 
-                        // Fallback: If it actually WAS [ymin, xmin, ymax, xmax], then w would be small and h would be small/negative?
-                        // But we saw negative height when doing box[2] - box[0].
-                        // So let's trust the [y, x, w, h] interpretation.
-
-                        w = (rawW / scale) * img.width * (canvas.width / img.width);
                         h = (rawH / scale) * img.height * (canvas.height / img.height);
+                        w = (rawW / scale) * img.width * (canvas.width / img.width);
 
                         // console.log(`DEBUG: Item ${idx} coords: x=${x}, y=${y}, w=${w}, h=${h}`);
                     } else {
