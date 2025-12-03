@@ -60,3 +60,16 @@ def get_offers(phone):
         codes = get_mem().get_redeems_by_phone(phone)
     
     return jsonify({"offers": codes})
+
+@customer_bp.route('/notifications', methods=['GET'])
+def get_notifications():
+    # In a real app, get phone from session/auth
+    # For demo, we'll accept a query param or default to a test user
+    phone = request.args.get('phone', '123') 
+    
+    # We need access to MemoryBank. In customer_app/app.py, it's attached to app.
+    # We can also re-instantiate it safely.
+    from agents.memory_bank import MemoryBank
+    mem = MemoryBank()
+    notifs = mem.get_notifications_by_phone(phone)
+    return jsonify({"notifications": notifs})
