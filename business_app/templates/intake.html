@@ -32,16 +32,18 @@
 
         /* Ensure the slip looks good */
         #posSlip {
-            border: 2px solid #000 !important;
+            border: none !important;
             background: white !important;
-            width: 350px !important;
-            /* Standard receipt width approx */
-            max-width: 100%;
-            margin: 0 auto !important;
-            padding: 20px !important;
+            width: 100% !important;
+            /* Full A4 width */
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 40px !important;
+            /* More padding for A4 */
             box-shadow: none !important;
             text-align: left !important;
-            /* Reset text align for content */
+            font-size: 14pt;
+            /* Larger text for A4 */
         }
 
         /* Force barcode centering */
@@ -148,9 +150,6 @@
                     <div id="detectedItemsList" class="mb-3"></div>
                     <button class="btn btn-outline-secondary btn-sm" onclick="reDetect()">
                         <i class="fas fa-redo mr-1"></i> Re-Detect
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm" onclick="retakeImage()">
-                        <i class="fas fa-camera mr-1"></i> Retake
                     </button>
                     <button class="btn btn-outline-warning btn-sm" onclick="retryDetection()">
                         <i class="fas fa-edit mr-1"></i> Adjust Boxes
