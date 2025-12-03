@@ -140,6 +140,19 @@ class MemoryBank:
             results.append(d)
         return results
 
+    def update_redeem_used(self, code: str, used: bool):
+        # Fetch existing to preserve other fields
+        existing = self.get_redeem(code)
+        if not existing:
+            return False
+        
+        existing['used'] = used
+        # Phone is stored separately in SQL/Firestore structure but also often in data dict
+        phone = existing.get('phone', '-') 
+        
+        self.save_redeem(code, phone, existing)
+        return True
+
     def save_order(self, order_id: str, phone: str, status: str, data: Dict):
         if self.use_cloud:
             import time

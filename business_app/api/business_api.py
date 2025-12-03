@@ -31,9 +31,15 @@ def update_status():
     get_mem().update_order_status(order_id, status)
     
     # Trigger Notification Agent
-    if status in ['Finished', 'Delivered']:
-        msg = f"Your order {order_id} is now {status}!"
-        get_a2a().call_agent("notification_agent", {"phone": phone, "msg": msg})
+    # Trigger Notification Agent
+    if status in ['Finished', 'Delivered', 'Ready']:
+        # Pass context to agent so it can generate a personalized message
+        get_a2a().call_agent("notification_agent", {
+            "phone": phone, 
+            "status": status, 
+            "order_id": order_id,
+            "type": "order_update"
+        })
         
     return jsonify({"status": "updated"})
 
@@ -41,3 +47,15 @@ def update_status():
 def get_redeem_codes():
     codes = get_mem().get_all_redeems()
     return jsonify({"codes": codes})
+
+@business_bp.route('/redeem_code/update', methods=['POST'])
+def update_redeem_code():
+    data = request.json
+    code = data.get('code')
+    used = data.get('used', True)
+    
+    success = get_mem().update_redeem_used(code, used)
+    if success:
+        return jsonify({"status": "updated"})
+    else:
+        return jsonify({"error": "Code not found"}), 404

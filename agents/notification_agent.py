@@ -16,15 +16,46 @@ class NotificationAgent(Agent):
         # In a real ADK app, tools are registered with the runtime.
         # Here we pass the tool implementation directly for the shim.
         self.tool = notifier_tool
+        
+        # Initialize Gemini for message generation
+        import google.generativeai as genai
+        import os
+        self.genai = genai
+        if os.environ.get("GEMINI_API_KEY"):
+            self.genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+            self.model = self.genai.GenerativeModel('gemini-2.0-flash-exp')
+        else:
+            self.model = None
 
     async def handle(self, ctx: ToolContext):
-        phone = ctx.inputs["phone"]
-        msg = ctx.inputs["message"]
+        phone = ctx.inputs.get("phone")
+        msg = ctx.inputs.get("message") or ctx.inputs.get("msg")
         
+        # If no explicit message, generate one based on context
+        if not msg and ctx.inputs.get("type") == "order_update":
+            status = ctx.inputs.get("status")
+            order_id = ctx.inputs.get("order_id")
+            
+            if self.model:
+                try:
+                    prompt = f"""
+                    You are a witty, friendly laundry assistant (like the Duolingo owl but for laundry).
+                    Write a SHORT, FUN push notification for Order #{order_id} which is now '{status}'.
+                    Use emojis. Be encouraging or slightly dramatic but cute.
+                    Max 15 words.
+                    """
+                    response = self.model.generate_content(prompt)
+                    msg = response.text.strip()
+                except Exception as e:
+                    print(f"[NotificationAgent] Generation failed: {e}")
+                    msg = f"Your order {order_id} is {status}! 🧺"
+            else:
+                msg = f"Your order {order_id} is {status}! 🧺"
+
         # In real ADK: return await ctx.call_tool("push_notify_tool", {"phone":phone, "msg":msg})
         # For our shim/demo:
         print(f"[NotificationAgent] Sending to {phone}: {msg}")
-        return {"status": "sent", "recipient": phone}
+        return {"status": "sent", "recipient": phone, "message": msg}
 
 # Legacy wrapper
 def send_notification(params):

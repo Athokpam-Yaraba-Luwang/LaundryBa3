@@ -64,11 +64,22 @@
 
     async function markUsed(code) {
         if (confirm("Mark this code as used?")) {
-            // In production, call API to update code status
-            const codeObj = codes.find(c => c.code === code);
-            if (codeObj) {
-                codeObj.used = true;
-                renderCodes();
+            // Call API to update code status
+            const res = await fetch('/api/business/redeem_code/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code, used: true })
+            });
+
+            if (res.ok) {
+                // Update local state
+                const codeObj = codes.find(c => c.code === code);
+                if (codeObj) {
+                    codeObj.used = true;
+                    renderCodes();
+                }
+            } else {
+                alert("Failed to update code status");
             }
         }
     }
