@@ -545,7 +545,13 @@
             const list = document.getElementById('detectedItemsList');
             list.innerHTML = '';
             data.items.forEach((item, idx) => {
-                list.innerHTML += `<div class="alert alert-secondary p-2 mb-1">${item.label} (${(item.confidence * 100).toFixed(0)}%)</div>`;
+                list.innerHTML += `
+                <div class="input-group mb-2">
+                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-tag text-primary"></i></span>
+                    <input type="text" class="form-control border-start-0" value="${item.label}" 
+                           onchange="updateItemLabel(${idx}, this.value)" placeholder="Item Name">
+                    <span class="input-group-text bg-light text-muted small">${(item.confidence * 100).toFixed(0)}%</span>
+                </div>`;
             });
 
             showStep(3);
@@ -622,7 +628,10 @@
             <div class="row mb-2 align-items-center">
                 <div class="col-6">${item.label}</div>
                 <div class="col-6">
-                    <input type="number" class="form-control price-input" data-idx="${idx}" placeholder="Price" value="10">
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control price-input" data-idx="${idx}" placeholder="Price" value="10">
+                    </div>
                 </div>
             </div>
         `;
@@ -690,6 +699,13 @@
 
         showStep(5);
         document.getElementById('progressBar').style.width = '100%';
+    }
+
+    function updateItemLabel(idx, newValue) {
+        if (detectionData && detectionData.items[idx]) {
+            detectionData.items[idx].label = newValue;
+            console.log(`Updated item ${idx} to: ${newValue}`);
+        }
     }
 
     function printSlip() {
