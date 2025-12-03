@@ -15,6 +15,18 @@ class AnalyticsOrchestrator(Agent):
             )
         )
         self.a2a = a2a
+        
+        # Initialize Gemini
+        import google.generativeai as genai
+        import os
+        
+        api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        if api_key:
+            genai.configure(api_key=api_key)
+            self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        else:
+            print("[AnalyticsOrchestrator] Warning: No API Key found")
+            self.model = None
 
     async def handle(self, ctx: ToolContext):
         timeframe = ctx.inputs.get("timeframe", "last_7_days")
@@ -43,7 +55,8 @@ class AnalyticsOrchestrator(Agent):
             # We can reuse the model to synthesize
             resp = await self.model.generate_content_async(master_prompt)
             master_summary = resp.text
-        except:
+        except Exception as e:
+            print(f"[AnalyticsOrchestrator] Synthesis failed: {e}")
             master_summary = "Combined analysis unavailable."
 
         # Format for frontend
