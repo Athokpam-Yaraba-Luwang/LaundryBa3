@@ -21,10 +21,15 @@ class NotificationAgent(Agent):
         import google.generativeai as genai
         import os
         self.genai = genai
-        if os.environ.get("GEMINI_API_KEY"):
-            self.genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+        
+        # Support both env vars
+        api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        
+        if api_key:
+            self.genai.configure(api_key=api_key)
             self.model = self.genai.GenerativeModel('gemini-2.0-flash-exp')
         else:
+            print("[NotificationAgent] Warning: No API Key found (GEMINI_API_KEY or GOOGLE_API_KEY)")
             self.model = None
 
     async def handle(self, ctx: ToolContext):
