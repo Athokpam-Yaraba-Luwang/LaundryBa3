@@ -370,8 +370,28 @@
                         }
                     }
 
+                    // Use detected color for box if valid, else cycle colors
+                    const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'];
+                    const boxColor = item.color || colors[idx % colors.length];
+
+                    ctx.strokeStyle = boxColor;
+                    ctx.lineWidth = 4;
                     ctx.strokeRect(x, y, w, h);
-                    ctx.fillText(item.label, x, y - 10);
+
+                    // Center text
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = 'white';
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 3; // Thicker outline for text
+                    ctx.font = 'bold 24px Arial';
+
+                    const centerX = x + (w / 2);
+                    const centerY = y + (h / 2);
+
+                    // Draw text with outline
+                    ctx.strokeText(item.label, centerX, centerY);
+                    ctx.fillText(item.label, centerX, centerY);
                 });
 
                 document.getElementById('previewImage').src = canvas.toDataURL();
