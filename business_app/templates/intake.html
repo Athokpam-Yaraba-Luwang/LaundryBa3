@@ -126,6 +126,9 @@
                     <button class="btn btn-outline-secondary btn-sm" onclick="reDetect()">
                         <i class="fas fa-redo mr-1"></i> Re-Detect
                     </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="retakeImage()">
+                        <i class="fas fa-camera mr-1"></i> Retake
+                    </button>
                     <button class="btn btn-outline-warning btn-sm" onclick="retryDetection()">
                         <i class="fas fa-edit mr-1"></i> Adjust Boxes
                     </button>
@@ -436,6 +439,9 @@
 
             showStep(3);
 
+            // Clear status on success
+            if (statusDiv) statusDiv.innerHTML = '';
+
         } catch (e) {
             console.error("Detection Error:", e);
             alert("Detection failed: " + e.message);
@@ -450,22 +456,34 @@
     }
 
     function reDetect() {
-        // Clear current data
-        detectionData = null;
-        currentImageB64 = null;
-        overlayImageB64 = '';
-        document.getElementById('previewImage').src = '';
-        document.getElementById('detectedItemsList').innerHTML = '';
+        // Reuse existing file/blob
+        const file = capturedBlob || (document.getElementById('imageInput').files ? document.getElementById('imageInput').files[0] : null);
 
-        // Go back to step 2
-        showStep(2);
+        if (file) {
+            // Clear previous results but keep file
+            detectionData = null;
+            currentImageB64 = null;
+            overlayImageB64 = '';
+            document.getElementById('previewImage').src = '';
+            document.getElementById('detectedItemsList').innerHTML = '';
 
-        // Reset camera view if needed
-        document.getElementById('captureOptions').style.display = 'block';
-        document.getElementById('cameraView').style.display = 'none';
+            // Show Step 2 (to show status)
+            showStep(2);
 
-        // Reset file input
-        document.getElementById('imageInput').value = '';
+            // Hide options, show status
+            document.getElementById('captureOptions').style.display = 'none';
+            document.getElementById('cameraView').style.display = 'none';
+
+            // Ensure status div is clean before starting
+            const statusDiv = document.getElementById('detectionStatus');
+            if (statusDiv) statusDiv.innerHTML = '';
+
+            // Trigger detection
+            uploadAndDetect(file);
+        } else {
+            // No file found, fallback to retake
+            retakeImage();
+        }
     }
 
     async function goToPrice() {
