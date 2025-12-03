@@ -28,6 +28,21 @@
         </div>
     </div>
 
+    <!-- Swarm Synthesis -->
+    <div class="card bg-gradient-to-r from-indigo-500 to-purple-600 text-white mb-8 shadow-xl">
+        <div class="flex items-start gap-4">
+            <div class="bg-white/20 p-3 rounded-lg backdrop-blur-sm">
+                <i class="fas fa-brain text-2xl"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-lg mb-1 opacity-90">Swarm Synthesis</h4>
+                <p class="text-indigo-50 leading-relaxed" id="swarmMasterSummary">
+                    Initializing swarm intelligence...
+                </p>
+            </div>
+        </div>
+    </div>
+
     <div class="grid-agents">
         <div class="card">
             <div class="flex justify-between mb-4">
@@ -109,6 +124,9 @@
         try {
             const resSummary = await fetch('/api/analytics/swarm?timeframe=today');
             const summary = await resSummary.json();
+
+            // Update Master Summary
+            document.getElementById('swarmMasterSummary').innerText = summary.master_summary || "Analysis complete.";
 
             // Simulate agent logs based on summary (since summary is text)
             // In a real streaming setup, we'd get chunks. Here we just show the result.
