@@ -142,6 +142,48 @@
             checkNotifications(); // Initial check
         }
     </script>
+    <!-- Patent Warning Modal -->
+    <div id="patentModal" class="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4 relative animate-bounce-in">
+            <button onclick="document.getElementById('patentModal').style.display='none'"
+                class="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <div class="text-center">
+                <div
+                    class="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Warning!</h2>
+                <p class="text-slate-600 font-medium">Patent Applying<br>(Intellectual Rights)</p>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes bounce-in {
+            0% {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .animate-bounce-in {
+            animation: bounce-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+    </style>
+
+    <script>
+        // Ensure it shows on every refresh/load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('patentModal').style.display = 'flex';
+        });
+    </script>
 </body>
 
 </html>
