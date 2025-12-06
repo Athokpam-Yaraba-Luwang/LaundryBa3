@@ -14,4 +14,6 @@ https://youtu.be/xegdhCO7S8s
 - bussiness app: https://laundryba-business-984388967128.us-central1.run.app/intake
 
 ## 📄 License
+Patent Applying(Intelectual rights).
 Proprietary software.
+
