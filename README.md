@@ -1,4 +1,4 @@
-# Patent Applying(Intelectual rights)
+# WARNING!: Patent Applying(Intelectual rights)
 
 # LaundryBa Enterprise
 
