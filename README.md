@@ -1,4 +1,4 @@
-# Patent pending (Provisional patent application)
+# Patent Applying(Intelectual rights)
 
 # LaundryBa Enterprise
 
