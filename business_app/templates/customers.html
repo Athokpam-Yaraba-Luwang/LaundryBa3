@@ -42,6 +42,24 @@
         }
     }
 
+    async function deleteCustomer(phone, name) {
+        if (!confirm(`Are you sure you want to delete ${name}? This cannot be undone.`)) return;
+
+        try {
+            const res = await fetch(`/api/business/customers/${phone}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                fetchCustomers();
+            } else {
+                alert('Failed to delete customer');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error deleting customer');
+        }
+    }
+
     function renderCustomers() {
         const grid = document.getElementById('customerGrid');
         const search = document.getElementById('custSearch').value.toLowerCase();
@@ -68,8 +86,13 @@
                         </div>
                     </div>
                     <div class="text-sm text-slate-500 truncate mb-4"><i class="fas fa-map-marker-alt mr-2 opacity-50"></i> ${address}</div>
-                    <div class="text-center text-xs font-bold text-blue-600 bg-blue-50 py-2.5 rounded-lg opacity-0 group-hover:opacity-100 transition border border-blue-100">
-                        <i class="fas fa-edit mr-1"></i> Manage Orders
+                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition mt-4">
+                        <div class="flex-1 text-center text-xs font-bold text-blue-600 bg-blue-50 py-2.5 rounded-lg border border-blue-100 hover:bg-blue-100">
+                            <i class="fas fa-edit mr-1"></i> Manage Orders
+                        </div>
+                        <button onclick="event.stopPropagation(); deleteCustomer('${phone}', '${name}')" class="w-10 flex items-center justify-center bg-red-50 text-red-500 rounded-lg border border-red-100 hover:bg-red-100 hover:text-red-600 transition">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
             `;

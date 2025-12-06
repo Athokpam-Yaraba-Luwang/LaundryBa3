@@ -76,6 +76,34 @@ class MemoryBank:
             results.append(d)
         return results
 
+    def delete_customer(self, phone: str):
+        if self.use_cloud:
+            # Firestore batch delete would be better, but doing sequential for simplicity
+            self.db.collection('customers').document(phone).delete()
+            
+            # Delete orders
+            orders = self.db.collection('orders').where('phone', '==', phone).stream()
+            for o in orders:
+                o.reference.delete()
+                
+            # Delete notifications
+            notifs = self.db.collection('notifications').where('phone', '==', phone).stream()
+            for n in notifs:
+                n.reference.delete()
+                
+            # Delete redeem codes
+            codes = self.db.collection('redeem_codes').where('phone', '==', phone).stream()
+            for c in codes:
+                c.reference.delete()
+            return
+
+        cur = self.conn.cursor()
+        cur.execute("DELETE FROM customers WHERE phone = ?", (phone,))
+        cur.execute("DELETE FROM orders WHERE phone = ?", (phone,))
+        cur.execute("DELETE FROM notifications WHERE phone = ?", (phone,))
+        cur.execute("DELETE FROM redeem_codes WHERE phone = ?", (phone,))
+        self.conn.commit()
+
     def save_fabric(self, key: str, data: Dict):
         if self.use_cloud:
             self.db.collection('fabric_kb').document(key).set(data)

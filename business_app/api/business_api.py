@@ -16,6 +16,11 @@ def get_customers():
         c['orders_count'] = len(orders)
     return jsonify({"customers": customers})
 
+@business_bp.route('/customers/<phone>', methods=['DELETE'])
+def delete_customer(phone):
+    get_mem().delete_customer(phone)
+    return jsonify({"status": "deleted"})
+
 @business_bp.route('/orders/<phone>', methods=['GET'])
 def get_customer_orders(phone):
     orders = get_mem().get_orders_by_phone(phone)
