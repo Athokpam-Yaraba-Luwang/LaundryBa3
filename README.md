@@ -1,3 +1,5 @@
+# Patent pending (Provisional patent application)
+
 # LaundryBa Enterprise
 
 A comprehensive laundry management system powered by AI agents, consisting of a Business App and a Customer App.
